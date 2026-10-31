@@ -1,0 +1,24 @@
+VERIFY: 22 match, 1 differ
+OK    reg   HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize|AppsUseLightTheme
+OK    reg   HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize|SystemUsesLightTheme
+OK    reg   HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced|HideFileExt
+OK    reg   HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced|Hidden
+OK    reg   HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced|TaskbarAl
+OK    reg   HKCU\Control Panel\Mouse|MouseSensitivity
+OK    reg   HKCU\Console|ScreenColors
+OK    reg   HKCU\Console|QuickEdit
+OK    reg   HKCU\Software\SimonTatham\PuTTY\Sessions\MigLab%20Share|HostName
+OK    reg   HKCU\Software\SimonTatham\PuTTY\Sessions\MigLab%20Share|PortNumber
+OK    reg   HKCU\Software\7-Zip\FM|ShowSystemMenu
+OK    reg   HKCU\Software\7-Zip\Options|MigLabMarker
+OK    files %USERPROFILE%\AppData\Roaming\Notepad++\userDefineLang.xml
+OK    files %USERPROFILE%\AppData\Roaming\Notepad++\config.xml
+OK    files %USERPROFILE%\AppData\Roaming\Code\User\settings.json
+OK    files %USERPROFILE%\AppData\Roaming\Code\User\keybindings.json
+OK    files %USERPROFILE%\AppData\Roaming\Code\User\snippets\miglab.code-snippets
+OK    files %USERPROFILE%\.gitconfig
+OK    files %USERPROFILE%\AppData\Roaming\Microsoft\Windows\SendTo\MigLab Notes.txt
+OK    files %USERPROFILE%\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json
+OK    env   MIGTEST_VAR
+DIFF  env   Path has tools: old=True new=False
+OK    env   vscode-icons extension

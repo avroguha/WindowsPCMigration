@@ -1,0 +1,101 @@
+{
+    "updatedAt":  "2026-10-21T16:19:20.8789897+05:30",
+    "entries":  {
+                    "win-wallpaper":  {
+                                          "app":  "",
+                                          "status":  "restored",
+                                          "at":  "2026-10-21T16:19:18.0304037+05:30"
+                                      },
+                    "win-startup-folder":  {
+                                               "app":  "",
+                                               "status":  "restored",
+                                               "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                           },
+                    "dev-vscode":  {
+                                       "app":  "",
+                                       "status":  "restored",
+                                       "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                   },
+                    "dev-git":  {
+                                    "app":  "",
+                                    "status":  "restored",
+                                    "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                },
+                    "win-snip-sketch":  {
+                                            "app":  "",
+                                            "status":  "restored",
+                                            "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                        },
+                    "tools-putty":  {
+                                        "app":  "",
+                                        "status":  "restored",
+                                        "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                    },
+                    "win-console":  {
+                                        "app":  "",
+                                        "status":  "restored",
+                                        "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                    },
+                    "win-sendto":  {
+                                       "app":  "",
+                                       "status":  "restored",
+                                       "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                   },
+                    "win-taskbar-order":  {
+                                              "app":  "",
+                                              "status":  "restored",
+                                              "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                          },
+                    "tools-7zip":  {
+                                       "app":  "",
+                                       "status":  "restored",
+                                       "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                   },
+                    "dev-notepadpp":  {
+                                          "app":  "",
+                                          "status":  "restored",
+                                          "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                      },
+                    "office-common":  {
+                                          "app":  "Microsoft Office",
+                                          "status":  "deferred",
+                                          "at":  "2026-10-21T16:19:10.6273177+05:30"
+                                      },
+                    "win-explorer":  {
+                                         "app":  "",
+                                         "status":  "restored",
+                                         "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                     },
+                    "win-user-fonts-reg":  {
+                                               "app":  "",
+                                               "status":  "restored",
+                                               "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                           },
+                    "browser-edge":  {
+                                         "app":  "",
+                                         "status":  "restored",
+                                         "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                     },
+                    "win-desktop-input":  {
+                                              "app":  "",
+                                              "status":  "restored",
+                                              "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                          },
+                    "win-taskbar-pins":  {
+                                             "app":  "",
+                                             "status":  "restored",
+                                             "at":  "2026-10-21T16:19:18.0304037+05:30"
+                                         },
+                    "win-start-menu":  {
+                                           "app":  "",
+                                           "status":  "restored",
+                                           "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                       },
+                    "dev-windows-terminal":  {
+                                                 "app":  "",
+                                                 "status":  "restored",
+                                                 "at":  "2026-10-21T16:19:18.0321609+05:30"
+                                             }
+                },
+    "computer":  "MIG-NEW"
+}

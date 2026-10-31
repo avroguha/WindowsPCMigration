@@ -1,0 +1,2516 @@
+{
+  "version": 1,
+  "description": "What a standard (non-admin) Windows user can carry from one PC to another. Each entry is a set of files or HKCU registry keys. Tokens: %APPDATA% %LOCALAPPDATA% %USERPROFILE% %DOCUMENTS% %DESKTOP%. An entry whose paths/keys do not exist on the source machine is skipped silently. secret=true entries are only exported with -IncludeSecrets and are encrypted when a password is given. appCheck: list of indicators that the owning program is installed (uninstall:<regex on display name>, cmd:<exe on PATH>, appx:<package name>, a registry key, or a path); when none matches, Import-Profile defers the entry until a later run finds the program. Files whose staged path exceeds 245 characters are skipped and listed (zip libraries cannot read them). dynamic: 'bruno-collections' (paths read from Bruno's config) or 'hkcu-vendors' (HKCU\\Software vendor keys found at export time); defaultOff: unticked by default in the wizard.",
+  "categories": {
+    "windows": "Windows shell, personalisation, input, console",
+    "office": "Microsoft Office user settings, templates, signatures, dictionaries, macros, add-ins",
+    "browser": "Browser profiles (bookmarks, extensions, history). Saved passwords/cookies do NOT travel in Chrome/Edge (DPAPI-bound) - sign in to sync",
+    "dev": "Developer tools and shells",
+    "tools": "Utilities (Notepad++, PuTTY, 7-Zip, screenshots, remote desktop...)",
+    "data": "Database / data tools",
+    "comms": "Mail, chat, meetings",
+    "secrets": "Keys, tokens and credential stores - opt-in, encrypted"
+  },
+  "entries": [
+    {
+      "id": "win-desktop-input",
+      "app": "Windows personalisation and input",
+      "category": "windows",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Control Panel\\Desktop",
+        "HKCU\\Control Panel\\Colors",
+        "HKCU\\Control Panel\\Mouse",
+        "HKCU\\Control Panel\\Keyboard",
+        "HKCU\\Control Panel\\Cursors",
+        "HKCU\\Control Panel\\Accessibility",
+        "HKCU\\Control Panel\\International",
+        "HKCU\\Control Panel\\Sound",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent"
+      ],
+      "excludeKeys": [
+        "HKCU\\Control Panel\\Desktop\\MuiCached",
+        "HKCU\\Control Panel\\International\\User Profile System Backup"
+      ],
+      "needsRestart": "signout",
+      "notes": "Wallpaper, colours, dark/light mode, mouse speed, pointer scheme, keyboard repeat, region/date formats, accessibility. The wallpaper file itself must exist on the new machine (see win-wallpaper).",
+      "summary": "Wallpaper colours, dark or light mode, mouse and keyboard speed, date and number formats, accessibility options."
+    },
+    {
+      "id": "win-wallpaper",
+      "app": "Current wallpaper file",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Windows\\Themes"
+      ],
+      "excludeDirs": [
+        "CachedFiles"
+      ],
+      "notes": "TranscodedWallpaper + slideshow settings. Desktop background is applied from here after sign-out/in.",
+      "summary": "The picture on your desktop."
+    },
+    {
+      "id": "win-explorer",
+      "app": "File Explorer options",
+      "category": "windows",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Ribbon",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StuckRects3",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons",
+        "HKCU\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\Bags\\AllFolders"
+      ],
+      "needsRestart": "explorer",
+      "notes": "Show extensions / hidden files, compact view, open to This PC, taskbar position/auto-hide, search settings, desktop icon visibility, default folder view.",
+      "summary": "File Explorer preferences: show file extensions and hidden files, folder views, taskbar position."
+    },
+    {
+      "id": "win-taskbar-pins",
+      "app": "Taskbar pinned apps",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned"
+      ],
+      "needsRestart": "explorer",
+      "notes": "Pinned shortcuts. Pins to apps that are not yet installed on the new PC show as broken until the app is installed; the Taskband registry key (win-taskbar-order) holds the order.",
+      "summary": "The programs pinned to your taskbar."
+    },
+    {
+      "id": "win-taskbar-order",
+      "app": "Taskbar pin order",
+      "category": "windows",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Taskband"
+      ],
+      "needsRestart": "explorer",
+      "notes": "Import after win-taskbar-pins, then restart Explorer.",
+      "summary": "The order of the pinned programs on the taskbar."
+    },
+    {
+      "id": "win-start-menu",
+      "app": "Start menu user shortcuts and layout",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs",
+        "%LOCALAPPDATA%\\Packages\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\LocalState"
+      ],
+      "excludeDirs": [
+        "Startup"
+      ],
+      "needsRestart": "signout",
+      "notes": "Per-user Start menu shortcuts (installers of per-user apps put them here) and the Windows 11 pinned layout (start2.bin). Layout applies after sign-out/in; pins to missing apps are dropped.",
+      "summary": "Your Start menu layout and pinned apps."
+    },
+    {
+      "id": "win-startup-folder",
+      "app": "Startup folder",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+      ],
+      "notes": "Shortcuts that run at sign-in. Check each one still points at an installed program.",
+      "summary": "Programs that start automatically when you sign in."
+    },
+    {
+      "id": "win-sendto",
+      "app": "Send To menu",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Windows\\SendTo"
+      ],
+      "summary": "The entries in the right-click \"Send to\" menu."
+    },
+    {
+      "id": "win-user-fonts",
+      "app": "User-installed fonts",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\Windows\\Fonts"
+      ],
+      "notes": "Fonts installed without admin ('Install for me'). Registered by win-user-fonts-reg.",
+      "summary": "Fonts you installed yourself."
+    },
+    {
+      "id": "win-user-fonts-reg",
+      "app": "User-installed fonts registration",
+      "category": "windows",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts"
+      ],
+      "needsRestart": "signout",
+      "notes": "Absolute paths into the profile - rewritten automatically when the username differs.",
+      "summary": "Registration of the fonts you installed yourself (goes with the fonts)."
+    },
+    {
+      "id": "win-console",
+      "app": "Console (cmd/PowerShell window) settings",
+      "category": "windows",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Console"
+      ],
+      "summary": "Colours and font of the command prompt and PowerShell windows."
+    },
+    {
+      "id": "win-rdp-client",
+      "app": "Remote Desktop client history",
+      "category": "windows",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Microsoft\\Terminal Server Client"
+      ],
+      "notes": "MRU list and per-server usernames. Saved RDP passwords are in Credential Manager and do not travel.",
+      "summary": "Remote Desktop: the list of computers you connected to before."
+    },
+    {
+      "id": "win-sticky-notes",
+      "app": "Sticky Notes",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Packages\\Microsoft.MicrosoftStickyNotes_8wekyb3d8bbwe\\LocalState"
+      ],
+      "notes": "plum.sqlite holds the notes. Close Sticky Notes before import. If signed in, notes also sync from the cloud.",
+      "summary": "Your Sticky Notes.",
+      "appCheck": [
+        "appx:Microsoft.MicrosoftStickyNotes"
+      ],
+      "appName": "Sticky Notes"
+    },
+    {
+      "id": "win-snip-sketch",
+      "app": "Snipping Tool settings",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Packages\\Microsoft.ScreenSketch_8wekyb3d8bbwe\\Settings"
+      ],
+      "summary": "Snipping Tool preferences.",
+      "appCheck": [
+        "appx:Microsoft.ScreenSketch"
+      ],
+      "appName": "Snipping Tool"
+    },
+    {
+      "id": "dev-windows-terminal",
+      "app": "Windows Terminal",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState\\settings.json",
+        "%LOCALAPPDATA%\\Packages\\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\\LocalState\\settings.json",
+        "%LOCALAPPDATA%\\Microsoft\\Windows Terminal\\settings.json"
+      ],
+      "notes": "settings.json for Windows Terminal (store, preview and unpackaged builds).",
+      "summary": "Windows Terminal profiles, colours and shortcuts.",
+      "appCheck": [
+        "appx:Microsoft.WindowsTerminal",
+        "appx:Microsoft.WindowsTerminalPreview",
+        "cmd:wt"
+      ],
+      "appName": "Windows Terminal"
+    },
+    {
+      "id": "ps-profiles",
+      "app": "PowerShell profiles and modules",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%DOCUMENTS%\\WindowsPowerShell",
+        "%DOCUMENTS%\\PowerShell",
+        "%USERPROFILE%\\.config\\powershell"
+      ],
+      "excludeDirs": [
+        "Modules",
+        "Scripts",
+        "Help"
+      ],
+      "notes": "Only the profile scripts; Modules and Scripts are left out (Documents is usually OneDrive-redirected anyway). Installed modules are listed in the inventory (reinstall with Install-Module -Scope CurrentUser).",
+      "summary": "PowerShell profile scripts (prompt, aliases, PSReadLine options).",
+      "includeFiles": [
+        "*profile*.ps1",
+        "PSReadLine*"
+      ]
+    },
+    {
+      "id": "ps-history",
+      "app": "PowerShell command history",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Windows\\PowerShell\\PSReadLine"
+      ],
+      "summary": "PowerShell command history."
+    },
+    {
+      "id": "office-common",
+      "app": "Microsoft Office options (Word, Excel, PowerPoint, Outlook, OneNote...)",
+      "category": "office",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Microsoft\\Office\\16.0"
+      ],
+      "excludeKeys": [
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\Identity",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\Licensing",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\Internet\\Server Cache",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Outlook\\Profiles",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\Roaming",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\ServicesManagerCache",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\Experiment",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\ExperimentConfigs",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\ExperimentEcs",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\ExperimentTas",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\Privacy",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Registration",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Lync",
+        "HKCU\\Software\\Microsoft\\Office\\16.0\\Common\\General\\LastUpdate"
+      ],
+      "notes": "Options dialogs, recent files lists, Excel/Word preferences, Outlook view preferences, COM add-in load behaviour (HKCU add-ins). Outlook mail profiles are deliberately excluded - the company's autodiscover recreates them. Office must be CLOSED during import.",
+      "summary": "Word, Excel, PowerPoint and Outlook options and preferences, recent files lists.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-templates",
+      "app": "Office templates (Normal.dotm, NormalEmail, custom templates)",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Templates",
+        "%DOCUMENTS%\\Custom Office Templates"
+      ],
+      "notes": "Normal.dotm carries Word macros, styles, AutoText. NormalEmail.dotm carries Outlook editor defaults.",
+      "summary": "Your Word and Outlook default template (styles, macros, AutoText) and custom templates.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-signatures",
+      "app": "Outlook signatures",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Signatures"
+      ],
+      "notes": "Signature files. Which signature is the default per account is stored in the mail profile and must be re-picked once in Outlook.",
+      "summary": "Your Outlook email signatures.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-dictionary",
+      "app": "Office custom dictionaries and AutoCorrect",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\UProof",
+        "%APPDATA%\\Microsoft\\Office"
+      ],
+      "excludeDirs": [
+        "Recent",
+        "16.0"
+      ],
+      "excludeFiles": [
+        "*.tmp",
+        "*.log"
+      ],
+      "notes": "CUSTOM.DIC, exclusion lists and the *.acl AutoCorrect lists.",
+      "summary": "Words you added to the spelling dictionary, and AutoCorrect entries.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-ribbon-qat",
+      "app": "Office Quick Access Toolbar and ribbon customisations",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\Office"
+      ],
+      "excludeDirs": [
+        "16.0",
+        "OTele",
+        "Licenses",
+        "Licenses16",
+        "Spw",
+        "SolutionPackages",
+        "ClickToRunPackageLocker",
+        "OneNote",
+        "Outlook",
+        "Shared"
+      ],
+      "excludeFiles": [
+        "*.log",
+        "*.tmp",
+        "*.dat",
+        "*.db"
+      ],
+      "notes": "*.officeUI files (Word.officeUI, Excel.officeUI, olkexplorer.officeUI...).",
+      "summary": "Quick Access Toolbar and ribbon customisations in Office.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-excel-startup",
+      "app": "Excel XLSTART, PERSONAL.XLSB and user add-ins",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Excel\\XLSTART",
+        "%APPDATA%\\Microsoft\\AddIns",
+        "%APPDATA%\\Microsoft\\Excel\\XLB"
+      ],
+      "notes": "PERSONAL.XLSB (personal macro workbook), .xlam add-ins. Add-ins must be re-ticked under File > Options > Add-ins if Excel does not pick them up.",
+      "summary": "Excel personal macro workbook and add-ins you installed.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-word-startup",
+      "app": "Word STARTUP and Building Blocks",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Word\\STARTUP",
+        "%APPDATA%\\Microsoft\\Document Building Blocks",
+        "%APPDATA%\\Microsoft\\Bibliography"
+      ],
+      "summary": "Word add-ins, building blocks and bibliography sources.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-outlook-macros",
+      "app": "Outlook VBA project, stationery, forms, rules export",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Outlook",
+        "%APPDATA%\\Microsoft\\Stationery",
+        "%APPDATA%\\Microsoft\\Forms"
+      ],
+      "excludeDirs": [
+        "RoamCache",
+        "Offline Address Books"
+      ],
+      "excludeFiles": [
+        "*.srs",
+        "*.xml",
+        "*.tmp"
+      ],
+      "notes": "VbaProject.OTM (macros), Outlook.NK2 if present, custom views. Server-side rules live in the mailbox and need nothing.",
+      "summary": "Outlook macros, custom views and stationery.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-outlook-pst",
+      "app": "Outlook PST archives",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\Outlook",
+        "%DOCUMENTS%\\Outlook Files"
+      ],
+      "excludeDirs": [
+        "RoamCache",
+        "Offline Address Books",
+        "16"
+      ],
+      "excludeFiles": [
+        "*.ost",
+        "*.nst",
+        "*.tmp",
+        "*.log",
+        "*.xml",
+        "*.srs",
+        "*.dat"
+      ],
+      "notes": "Personal folder files (.pst) kept outside OneDrive. The .ost cache is excluded (rebuilt from the server). PSTs can be GB-sized: the per-file cap applies - raise -MaxFileMB or move them by hand. Re-open with File > Open > Open Outlook Data File.",
+      "summary": "Outlook archive files (.pst) kept on this computer. Can be large.",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "office-onenote",
+      "app": "OneNote local notebook cache and settings",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\OneNote\\16.0\\Backup"
+      ],
+      "notes": "Cloud notebooks re-sync by themselves; only local backups are carried.",
+      "summary": "Local OneNote backups (cloud notebooks come back by themselves).",
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office"
+    },
+    {
+      "id": "browser-edge",
+      "app": "Microsoft Edge profile",
+      "category": "browser",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data"
+      ],
+      "excludeDirs": [
+        "ActorSafetyLists",
+        "AutofillStates",
+        "AutofillStrikeDatabase",
+        "Avatars",
+        "BrowserMetrics",
+        "BudgetDatabase",
+        "Cache",
+        "CertificateRevocation",
+        "ClientCertificates",
+        "Code Cache",
+        "Collections",
+        "Crashpad",
+        "Crowd Deny",
+        "DIPS",
+        "DawnCache",
+        "DawnGraphiteCache",
+        "DawnWebGPUCache",
+        "Download Service",
+        "Edge Shopping",
+        "EdgeEDrop",
+        "EdgeHubAppUsage",
+        "Feature Engagement Tracker",
+        "File System",
+        "FirstPartySetsPreloaded",
+        "FontLookupTableCache",
+        "GCM Store",
+        "GPUCache",
+        "GrShaderCache",
+        "GraphiteDawnCache",
+        "IndexedDB",
+        "MEIPreload",
+        "Managed Extension Settings",
+        "MediaDeviceSalts",
+        "MediaFoundationWidevineCdm",
+        "Network",
+        "OnDeviceHeadSuggestModel",
+        "OptGuideOnDeviceClassifierModel",
+        "OptGuideOnDeviceModel",
+        "OptimizationGuidePredictionModels",
+        "OriginTrials",
+        "PKIMetadata",
+        "PersistentOriginTrials",
+        "Platform Notifications",
+        "PreferredApps",
+        "PrivacySandboxAttestationsPreloaded",
+        "ProbabilisticRevealTokenRegistry",
+        "RecoveryImproved",
+        "Reporting and NEL",
+        "SSLErrorAssistant",
+        "Safe Browsing",
+        "Safe Browsing Network",
+        "Segmentation Platform",
+        "Service Worker",
+        "Session Storage",
+        "Sessions_Encrypted",
+        "ShaderCache",
+        "Shared Dictionary",
+        "Site Characteristics Database",
+        "SmartScreen",
+        "Snapshots",
+        "Storage",
+        "Subresource Filter",
+        "SwReporter",
+        "Sync App Settings",
+        "Sync Data",
+        "Sync Extension Settings",
+        "ThirdPartyModuleList64",
+        "TpcdMetadata",
+        "Trust Tokens",
+        "TrustTokenKeyCommitments",
+        "VideoDecodeStats",
+        "WasmTtsEngine",
+        "WebStorage",
+        "WebrtcVideoStats",
+        "Webstore Downloads",
+        "WidevineCdm",
+        "ZxcvbnData",
+        "blob_storage",
+        "chrome_cart_db",
+        "commerce_subscription_db",
+        "component_crx_cache",
+        "coupon_db",
+        "discounts_db",
+        "extensions_crx_cache",
+        "hyphen-data",
+        "optimization_guide_hint_cache_store",
+        "optimization_guide_model_store",
+        "parcel_tracking_db",
+        "pnacl",
+        "shared_proto_db"
+      ],
+      "excludeFiles": [
+        "*-journal",
+        "*.log",
+        "*.pma",
+        "Cookies",
+        "Cookies-journal",
+        "DIPS",
+        "DIPS-wal",
+        "LOG",
+        "LOG.old",
+        "Login Data",
+        "Login Data For Account",
+        "Login Data For Account-journal",
+        "Login Data-journal",
+        "Network Action Predictor",
+        "Network Persistent State",
+        "SingletonCookie",
+        "SingletonLock",
+        "SingletonSocket",
+        "Top Sites",
+        "TransportSecurity",
+        "Visited Links",
+        "heavy_ad_intervention_opt_out.db",
+        "lockfile",
+        "trusted_vault.pb"
+      ],
+      "notes": "Bookmarks, extensions, history, open tabs, site settings. Passwords, cookies and payment data are encrypted to the OLD machine (DPAPI) and are not carried - with a work account, Edge sync restores them. Edge must be CLOSED on both machines. Site data (IndexedDB/WebStorage - web-app caches like YouTube/Teams) is excluded; sites rebuild it.",
+      "summary": "Edge bookmarks, extensions, history, open tabs and site preferences. Saved passwords come back via Edge sync, not from here."
+    },
+    {
+      "id": "browser-chrome",
+      "app": "Google Chrome profile",
+      "category": "browser",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Google\\Chrome\\User Data"
+      ],
+      "excludeDirs": [
+        "ActorSafetyLists",
+        "AutofillStates",
+        "AutofillStrikeDatabase",
+        "Avatars",
+        "BrowserMetrics",
+        "BudgetDatabase",
+        "Cache",
+        "CertificateRevocation",
+        "ClientCertificates",
+        "Code Cache",
+        "Crashpad",
+        "Crowd Deny",
+        "DIPS",
+        "DawnCache",
+        "DawnGraphiteCache",
+        "DawnWebGPUCache",
+        "Download Service",
+        "Feature Engagement Tracker",
+        "File System",
+        "FirstPartySetsPreloaded",
+        "FontLookupTableCache",
+        "GCM Store",
+        "GPUCache",
+        "GrShaderCache",
+        "GraphiteDawnCache",
+        "IndexedDB",
+        "MEIPreload",
+        "Managed Extension Settings",
+        "MediaDeviceSalts",
+        "MediaFoundationWidevineCdm",
+        "Network",
+        "OnDeviceHeadSuggestModel",
+        "OptGuideOnDeviceClassifierModel",
+        "OptGuideOnDeviceModel",
+        "OptimizationGuidePredictionModels",
+        "OriginTrials",
+        "PKIMetadata",
+        "PersistentOriginTrials",
+        "Platform Notifications",
+        "PreferredApps",
+        "PrivacySandboxAttestationsPreloaded",
+        "ProbabilisticRevealTokenRegistry",
+        "RecoveryImproved",
+        "Reporting and NEL",
+        "SSLErrorAssistant",
+        "Safe Browsing",
+        "Safe Browsing Network",
+        "Segmentation Platform",
+        "Service Worker",
+        "Session Storage",
+        "Sessions_Encrypted",
+        "ShaderCache",
+        "Shared Dictionary",
+        "Site Characteristics Database",
+        "Snapshots",
+        "Storage",
+        "Subresource Filter",
+        "SwReporter",
+        "Sync App Settings",
+        "Sync Data",
+        "Sync Extension Settings",
+        "ThirdPartyModuleList64",
+        "TpcdMetadata",
+        "Trust Tokens",
+        "TrustTokenKeyCommitments",
+        "VideoDecodeStats",
+        "WasmTtsEngine",
+        "WebStorage",
+        "WebrtcVideoStats",
+        "Webstore Downloads",
+        "WidevineCdm",
+        "ZxcvbnData",
+        "blob_storage",
+        "chrome_cart_db",
+        "commerce_subscription_db",
+        "component_crx_cache",
+        "coupon_db",
+        "discounts_db",
+        "extensions_crx_cache",
+        "hyphen-data",
+        "optimization_guide_hint_cache_store",
+        "optimization_guide_model_store",
+        "parcel_tracking_db",
+        "pnacl",
+        "shared_proto_db"
+      ],
+      "excludeFiles": [
+        "*-journal",
+        "*.log",
+        "*.pma",
+        "Cookies",
+        "Cookies-journal",
+        "DIPS",
+        "DIPS-wal",
+        "LOG",
+        "LOG.old",
+        "Login Data",
+        "Login Data For Account",
+        "Login Data For Account-journal",
+        "Login Data-journal",
+        "Network Action Predictor",
+        "Network Persistent State",
+        "SingletonCookie",
+        "SingletonLock",
+        "SingletonSocket",
+        "Top Sites",
+        "TransportSecurity",
+        "Visited Links",
+        "heavy_ad_intervention_opt_out.db",
+        "lockfile",
+        "trusted_vault.pb"
+      ],
+      "notes": "Same caveats as Edge. Chrome must be CLOSED on both machines. Site data (IndexedDB/WebStorage - web-app caches like YouTube/Teams) is excluded; sites rebuild it.",
+      "summary": "Chrome bookmarks, extensions, history, open tabs and site preferences. Saved passwords come back via Chrome sync, not from here.",
+      "appCheck": [
+        "uninstall:Google Chrome",
+        "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe",
+        "%LOCALAPPDATA%\\Google\\Chrome\\Application\\chrome.exe"
+      ],
+      "appName": "Google Chrome"
+    },
+    {
+      "id": "browser-firefox",
+      "app": "Mozilla Firefox profile",
+      "category": "browser",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Mozilla\\Firefox"
+      ],
+      "excludeDirs": [
+        "cache2",
+        "startupCache",
+        "shader-cache",
+        "crashes",
+        "minidumps",
+        "saved-telemetry-pings",
+        "datareporting",
+        "thumbnails"
+      ],
+      "excludeFiles": [
+        "key4.db",
+        "key3.db",
+        "logins.json",
+        "logins-backup.json",
+        "cookies.sqlite",
+        "cookies.sqlite-wal",
+        "parent.lock",
+        "lock",
+        "*.log"
+      ],
+      "notes": "Bookmarks, history, extensions, settings. Logins and cookies are portable in Firefox and therefore sensitive - they are in the separate secret entry browser-firefox-logins.",
+      "summary": "Firefox bookmarks, extensions, history and settings.",
+      "appCheck": [
+        "uninstall:Mozilla Firefox",
+        "%ProgramFiles%\\Mozilla Firefox\\firefox.exe",
+        "%LOCALAPPDATA%\\Mozilla Firefox\\firefox.exe"
+      ],
+      "appName": "Firefox"
+    },
+    {
+      "id": "browser-firefox-logins",
+      "app": "Firefox saved logins and cookies",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%APPDATA%\\Mozilla\\Firefox\\Profiles"
+      ],
+      "excludeDirs": [
+        "cache2",
+        "startupCache",
+        "storage",
+        "extensions",
+        "sessionstore-backups",
+        "bookmarkbackups",
+        "crashes",
+        "minidumps",
+        "datareporting",
+        "saved-telemetry-pings",
+        "shader-cache",
+        "thumbnails",
+        "security_state",
+        "weave",
+        "settings"
+      ],
+      "includeOnly": [
+        "key4.db",
+        "logins.json",
+        "cookies.sqlite"
+      ],
+      "notes": "Only key4.db, logins.json and cookies.sqlite per profile. Restores saved passwords (and the master password, if set).",
+      "includeFiles": [
+        "key4.db",
+        "logins.json",
+        "cookies.sqlite"
+      ],
+      "summary": "Firefox saved passwords and cookies.",
+      "appCheck": [
+        "uninstall:Mozilla Firefox",
+        "%ProgramFiles%\\Mozilla Firefox\\firefox.exe",
+        "%LOCALAPPDATA%\\Mozilla Firefox\\firefox.exe"
+      ],
+      "appName": "Firefox"
+    },
+    {
+      "id": "dev-git",
+      "app": "Git configuration",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.gitconfig",
+        "%USERPROFILE%\\.gitignore_global",
+        "%USERPROFILE%\\.gitattributes",
+        "%USERPROFILE%\\.config\\git",
+        "%USERPROFILE%\\.bash_profile",
+        "%USERPROFILE%\\.bashrc",
+        "%USERPROFILE%\\.profile",
+        "%USERPROFILE%\\.inputrc",
+        "%USERPROFILE%\\.minttyrc",
+        "%USERPROFILE%\\.bash_history"
+      ],
+      "notes": "Identity, aliases, credential helper setting, Git Bash shell config. Stored credentials are in Credential Manager (Git Credential Manager) and must be re-entered on first push.",
+      "summary": "Git name, email, aliases and Git Bash preferences.",
+      "appCheck": [
+        "cmd:git",
+        "uninstall:^Git( |$)",
+        "%ProgramFiles%\\Git\\cmd\\git.exe",
+        "%LOCALAPPDATA%\\Programs\\Git\\cmd\\git.exe"
+      ],
+      "appName": "Git"
+    },
+    {
+      "id": "dev-git-credentials",
+      "app": "Git plain-text credential store",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%USERPROFILE%\\.git-credentials"
+      ],
+      "summary": "Git passwords stored in a plain file.",
+      "appCheck": [
+        "cmd:git",
+        "uninstall:^Git( |$)",
+        "%ProgramFiles%\\Git\\cmd\\git.exe"
+      ],
+      "appName": "Git"
+    },
+    {
+      "id": "dev-ssh",
+      "app": "SSH keys, config and known hosts",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%USERPROFILE%\\.ssh"
+      ],
+      "notes": "Private keys. Export only with -IncludeSecrets and a password; OneDrive is a corporate-visible location.",
+      "summary": "SSH keys and known hosts."
+    },
+    {
+      "id": "dev-vscode",
+      "app": "Visual Studio Code user settings",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Code\\User"
+      ],
+      "excludeDirs": [
+        "*copilot-resource-browser*",
+        "*copilot-resource-discovery*",
+        ".cache",
+        "CachedData",
+        "CachedExtensionVSIXs",
+        "CachedProfilesData",
+        "History",
+        "globalStorage\\github.copilot",
+        "globalStorage\\github.copilot-chat",
+        "globalStorage\\ms-vscode-remote.remote-containers",
+        "globalStorage\\ms-vscode.js-debug",
+        "globalStorage\\ms-vscode.vscode-github-issue-notebooks",
+        "logs",
+        "node_modules",
+        "workspaceStorage"
+      ],
+      "excludeFiles": [
+        "*.log",
+        "state.vscdb.backup"
+      ],
+      "notes": "settings.json, keybindings.json, snippets, profiles, extension state, and Backups (unsaved editors kept by hot exit - restored only when the same folders exist on the new PC). The extension LIST is captured in the inventory and reinstalled by Import-Profile when code is on PATH. VS Code must be CLOSED on both machines.",
+      "summary": "VS Code settings, keyboard shortcuts, snippets, the extension list, and unsaved editors (hot exit).",
+      "appCheck": [
+        "uninstall:Microsoft Visual Studio Code",
+        "cmd:code",
+        "%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe",
+        "%ProgramFiles%\\Microsoft VS Code\\Code.exe"
+      ],
+      "appName": "Visual Studio Code",
+      "needsClose": true
+    },
+    {
+      "id": "dev-vscode-insiders",
+      "app": "VS Code Insiders user settings",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Code - Insiders\\User"
+      ],
+      "excludeDirs": [
+        "workspaceStorage",
+        "History",
+        "CachedExtensionVSIXs",
+        "CachedData",
+        "logs"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "summary": "VS Code Insiders settings and shortcuts.",
+      "appCheck": [
+        "uninstall:Visual Studio Code Insiders",
+        "cmd:code-insiders"
+      ],
+      "appName": "VS Code Insiders"
+    },
+    {
+      "id": "dev-cursor",
+      "app": "Cursor editor user settings",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Cursor\\User"
+      ],
+      "excludeDirs": [
+        "*copilot-resource-browser*",
+        ".cache",
+        "CachedData",
+        "CachedExtensionVSIXs",
+        "History",
+        "logs",
+        "node_modules",
+        "workspaceStorage"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "summary": "Cursor editor settings and shortcuts.",
+      "appCheck": [
+        "uninstall:^Cursor",
+        "cmd:cursor"
+      ],
+      "appName": "Cursor"
+    },
+    {
+      "id": "dev-jetbrains",
+      "app": "JetBrains IDE settings (IntelliJ, PyCharm, DataGrip...)",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\JetBrains"
+      ],
+      "excludeDirs": [
+        "plugins",
+        "jdbc-drivers",
+        "log",
+        "consoles",
+        "scratches-cache"
+      ],
+      "excludeFiles": [
+        "*.log",
+        "*.hprof"
+      ],
+      "notes": "Keymaps, code styles, options, templates per IDE version. Plugins are listed in each IDE's options; reinstall from the IDE. Settings Sync (JetBrains account) is the easier path if available.",
+      "summary": "IntelliJ, PyCharm, DataGrip and other JetBrains IDE settings, keymaps and code styles.",
+      "appCheck": [
+        "uninstall:IntelliJ|PyCharm|DataGrip|WebStorm|Rider|CLion|GoLand|PhpStorm|RubyMine|JetBrains"
+      ],
+      "appName": "a JetBrains IDE"
+    },
+    {
+      "id": "dev-jetbrains-local",
+      "app": "JetBrains Toolbox settings",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\JetBrains\\Toolbox\\.settings.json"
+      ],
+      "summary": "JetBrains Toolbox preferences.",
+      "appCheck": [
+        "uninstall:JetBrains Toolbox",
+        "%LOCALAPPDATA%\\JetBrains\\Toolbox\\bin\\jetbrains-toolbox.exe"
+      ],
+      "appName": "JetBrains Toolbox"
+    },
+    {
+      "id": "dev-notepadpp",
+      "app": "Notepad++ settings, sessions, plugins config",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Notepad++"
+      ],
+      "excludeDirs": [],
+      "notes": "config.xml, stylers, shortcuts, user-defined languages, session.xml (open tabs) and the backup folder that holds UNSAVED tabs. Notepad++ writes those files while running and on exit: close it before packing so the latest text is on disk. Plugins themselves are reinstalled from Plugins Admin.",
+      "summary": "Notepad++ settings, themes, shortcuts, open tabs - including tabs you never saved.",
+      "appCheck": [
+        "uninstall:Notepad\\+\\+",
+        "%ProgramFiles%\\Notepad++\\notepad++.exe",
+        "%LOCALAPPDATA%\\Programs\\Notepad++\\notepad++.exe"
+      ],
+      "appName": "Notepad++",
+      "needsClose": true
+    },
+    {
+      "id": "dev-sublime",
+      "app": "Sublime Text settings",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Sublime Text\\Packages\\User",
+        "%APPDATA%\\Sublime Text 3\\Packages\\User"
+      ],
+      "summary": "Sublime Text settings.",
+      "appCheck": [
+        "uninstall:Sublime Text"
+      ],
+      "appName": "Sublime Text"
+    },
+    {
+      "id": "dev-python",
+      "app": "Python / pip / conda / Jupyter user config",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\pip",
+        "%USERPROFILE%\\pip\\pip.ini",
+        "%USERPROFILE%\\.condarc",
+        "%USERPROFILE%\\.jupyter",
+        "%USERPROFILE%\\.ipython\\profile_default\\ipython_config.py",
+        "%USERPROFILE%\\.pylintrc",
+        "%USERPROFILE%\\.pypirc"
+      ],
+      "notes": "pip.ini (index URL / proxy), conda channels, Jupyter config. Virtual environments are NOT copied - recreate from requirements files. .pypirc may hold tokens - review before sharing.",
+      "summary": "Python, pip, conda and Jupyter configuration.",
+      "appCheck": [
+        "cmd:python",
+        "cmd:py",
+        "cmd:conda",
+        "uninstall:^Python "
+      ],
+      "appName": "Python"
+    },
+    {
+      "id": "dev-node",
+      "app": "Node / npm / yarn user config",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.yarnrc",
+        "%USERPROFILE%\\.yarnrc.yml",
+        "%USERPROFILE%\\.nvmrc",
+        "%APPDATA%\\npm\\etc"
+      ],
+      "notes": "Globally installed npm packages are listed in the inventory (npm ls -g); reinstall them. ~/.npmrc is a secret entry (auth tokens).",
+      "summary": "Node.js and yarn configuration.",
+      "appCheck": [
+        "cmd:node",
+        "uninstall:Node\\.js"
+      ],
+      "appName": "Node.js"
+    },
+    {
+      "id": "dev-npmrc",
+      "app": "npm user config (.npmrc, may hold registry tokens)",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%USERPROFILE%\\.npmrc"
+      ],
+      "summary": "npm configuration file (may hold a registry token).",
+      "appCheck": [
+        "cmd:npm",
+        "uninstall:Node\\.js"
+      ],
+      "appName": "Node.js"
+    },
+    {
+      "id": "dev-java",
+      "app": "Maven / Gradle user config",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.m2\\settings.xml",
+        "%USERPROFILE%\\.m2\\toolchains.xml",
+        "%USERPROFILE%\\.gradle\\init.d",
+        "%USERPROFILE%\\.gradle\\init.gradle"
+      ],
+      "notes": "settings.xml often carries Artifactory credentials - if it does, treat it as a secret (it is exported here in clear). The local repositories (~/.m2/repository, ~/.gradle/caches) are not copied.",
+      "summary": "Maven and Gradle configuration (check for passwords inside settings.xml)."
+    },
+    {
+      "id": "dev-gradle-props",
+      "app": "Gradle user properties (often tokens)",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%USERPROFILE%\\.gradle\\gradle.properties"
+      ],
+      "summary": "Gradle properties (often hold tokens)."
+    },
+    {
+      "id": "dev-dotnet",
+      "app": ".NET / NuGet user config",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\NuGet\\NuGet.Config",
+        "%USERPROFILE%\\.nuget\\NuGet\\NuGet.Config",
+        "%USERPROFILE%\\.dotnet\\tools"
+      ],
+      "excludeDirs": [
+        ".store"
+      ],
+      "notes": "NuGet sources (may hold encrypted credentials bound to the old machine - re-enter them). Global dotnet tools must be reinstalled (dotnet tool install -g ...); the list is in the inventory.",
+      "summary": "NuGet package sources and .NET tool list.",
+      "appCheck": [
+        "cmd:dotnet",
+        "uninstall:Microsoft \\.NET SDK"
+      ],
+      "appName": ".NET SDK"
+    },
+    {
+      "id": "dev-visualstudio",
+      "app": "Visual Studio user settings",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\VisualStudio"
+      ],
+      "excludeDirs": [
+        "ComponentModelCache",
+        "Extensions",
+        "ImageLibrary",
+        "Roslyn",
+        "Telemetry",
+        "Designer",
+        "ServerCache",
+        "ImageCache",
+        "VTC",
+        "ActivityLog"
+      ],
+      "excludeFiles": [
+        "*.log",
+        "*.pdb",
+        "*.dll",
+        "*.cache",
+        "*.bin"
+      ],
+      "notes": "Settings, window layouts, extensions list. Use Tools > Import and Export Settings for a clean .vssettings as well. VS must be closed.",
+      "summary": "Visual Studio settings and window layouts.",
+      "appCheck": [
+        "uninstall:Visual Studio (Community|Professional|Enterprise)"
+      ],
+      "appName": "Visual Studio"
+    },
+    {
+      "id": "dev-windows-tools-cfg",
+      "app": "Shell config files in the profile root (.wslconfig, .vimrc, .tmux.conf, .curlrc, .wgetrc, .editorconfig, .terraformrc, .gnupg config)",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.wslconfig",
+        "%USERPROFILE%\\.vimrc",
+        "%USERPROFILE%\\_vimrc",
+        "%USERPROFILE%\\.vim",
+        "%USERPROFILE%\\.tmux.conf",
+        "%USERPROFILE%\\.curlrc",
+        "%USERPROFILE%\\.wgetrc",
+        "%USERPROFILE%\\.editorconfig",
+        "%USERPROFILE%\\.terraformrc",
+        "%USERPROFILE%\\.gnupg\\gpg.conf"
+      ],
+      "summary": "Small config files in your profile (.vimrc, .wslconfig, .curlrc, .editorconfig and similar)."
+    },
+    {
+      "id": "dev-docker-config",
+      "app": "Docker CLI config (may hold registry auth)",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%USERPROFILE%\\.docker\\config.json",
+        "%USERPROFILE%\\.docker\\daemon.json"
+      ],
+      "summary": "Docker registry logins.",
+      "appCheck": [
+        "cmd:docker",
+        "uninstall:Docker Desktop"
+      ],
+      "appName": "Docker"
+    },
+    {
+      "id": "dev-cloud-cli",
+      "app": "AWS / Azure / gcloud / kubectl credentials and config",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%USERPROFILE%\\.aws",
+        "%USERPROFILE%\\.azure",
+        "%USERPROFILE%\\.kube",
+        "%APPDATA%\\gcloud"
+      ],
+      "excludeDirs": [
+        "logs",
+        "cache",
+        "cli",
+        "commands",
+        "sso",
+        "telemetry",
+        "logs"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "notes": "Access keys and kubeconfigs. Most corporate setups re-issue these on sign-in; export only if you cannot re-create them.",
+      "summary": "AWS, Azure, Google Cloud and Kubernetes command-line credentials.",
+      "appCheck": [
+        "cmd:aws",
+        "cmd:az",
+        "cmd:kubectl",
+        "cmd:gcloud"
+      ],
+      "appName": "the AWS / Azure / kubectl command-line tools"
+    },
+    {
+      "id": "dev-gnupg",
+      "app": "GnuPG keyrings",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%APPDATA%\\gnupg"
+      ],
+      "excludeDirs": [
+        "crls.d"
+      ],
+      "excludeFiles": [
+        "*.lock",
+        "S.gpg-agent*",
+        "random_seed"
+      ],
+      "summary": "GnuPG keys.",
+      "appCheck": [
+        "cmd:gpg",
+        "uninstall:Gpg4win|GnuPG"
+      ],
+      "appName": "GnuPG"
+    },
+    {
+      "id": "tools-putty",
+      "app": "PuTTY sessions and host keys",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\SimonTatham"
+      ],
+      "notes": "Sessions, colours, known host keys. Private keys (.ppk) are files - include them via dev-ssh or copy by hand.",
+      "summary": "PuTTY saved sessions and settings.",
+      "appCheck": [
+        "uninstall:PuTTY",
+        "cmd:putty",
+        "%ProgramFiles%\\PuTTY\\putty.exe"
+      ],
+      "appName": "PuTTY"
+    },
+    {
+      "id": "tools-kitty-mremoteng",
+      "app": "KiTTY / mRemoteNG / Royal TS saved sessions",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\KiTTY",
+        "%APPDATA%\\mRemoteNG",
+        "%APPDATA%\\Royal TS",
+        "%DOCUMENTS%\\Royal TS"
+      ],
+      "excludeDirs": [
+        "Logs",
+        "Backups",
+        "Cache"
+      ],
+      "notes": "mRemoteNG confCons.xml holds passwords encrypted with the default (known) key - treat as sensitive.",
+      "summary": "KiTTY, mRemoteNG and Royal TS saved sessions and settings.",
+      "appCheck": [
+        "uninstall:KiTTY|mRemoteNG|Royal TS"
+      ],
+      "appName": "KiTTY / mRemoteNG / Royal TS"
+    },
+    {
+      "id": "tools-winscp",
+      "app": "WinSCP sessions and settings",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Martin Prikryl\\WinSCP 2"
+      ],
+      "notes": "Stored session passwords use reversible obfuscation - sensitive. If WinSCP is in INI mode, the file is %APPDATA%\\WinSCP.ini (tools-winscp-ini).",
+      "summary": "WinSCP saved sites and settings.",
+      "appCheck": [
+        "uninstall:WinSCP",
+        "%ProgramFiles(x86)%\\WinSCP\\WinSCP.exe",
+        "%LOCALAPPDATA%\\Programs\\WinSCP\\WinSCP.exe"
+      ],
+      "appName": "WinSCP"
+    },
+    {
+      "id": "tools-winscp-ini",
+      "app": "WinSCP INI mode config",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\WinSCP.ini"
+      ],
+      "summary": "WinSCP settings (portable mode).",
+      "appCheck": [
+        "uninstall:WinSCP",
+        "%ProgramFiles(x86)%\\WinSCP\\WinSCP.exe",
+        "%LOCALAPPDATA%\\Programs\\WinSCP\\WinSCP.exe"
+      ],
+      "appName": "WinSCP"
+    },
+    {
+      "id": "tools-filezilla",
+      "app": "FileZilla sites and settings",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%APPDATA%\\FileZilla"
+      ],
+      "excludeFiles": [
+        "*.log",
+        "queue.sqlite3"
+      ],
+      "notes": "sitemanager.xml stores passwords base64 (clear text) - secret.",
+      "summary": "FileZilla saved sites, including their passwords.",
+      "appCheck": [
+        "uninstall:FileZilla"
+      ],
+      "appName": "FileZilla"
+    },
+    {
+      "id": "tools-7zip",
+      "app": "7-Zip settings",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\7-Zip"
+      ],
+      "summary": "7-Zip preferences.",
+      "appCheck": [
+        "uninstall:7-Zip",
+        "%ProgramFiles%\\7-Zip\\7zFM.exe"
+      ],
+      "appName": "7-Zip"
+    },
+    {
+      "id": "tools-greenshot",
+      "app": "Greenshot settings",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Greenshot"
+      ],
+      "summary": "Greenshot screenshot settings.",
+      "appCheck": [
+        "uninstall:Greenshot"
+      ],
+      "appName": "Greenshot"
+    },
+    {
+      "id": "tools-sharex",
+      "app": "ShareX settings",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%DOCUMENTS%\\ShareX"
+      ],
+      "excludeDirs": [
+        "Screenshots",
+        "Logs",
+        "Backup"
+      ],
+      "summary": "ShareX settings and workflows.",
+      "appCheck": [
+        "uninstall:ShareX"
+      ],
+      "appName": "ShareX"
+    },
+    {
+      "id": "tools-snagit",
+      "app": "Snagit settings and presets",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\TechSmith\\Snagit"
+      ],
+      "excludeDirs": [
+        "DataStore",
+        "Logs",
+        "Cache",
+        "Autosave"
+      ],
+      "notes": "The Snagit library (DataStore) is excluded; export it from inside Snagit if needed.",
+      "summary": "Snagit settings and presets.",
+      "appCheck": [
+        "uninstall:Snagit"
+      ],
+      "appName": "Snagit"
+    },
+    {
+      "id": "tools-powertoys",
+      "app": "PowerToys settings",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\PowerToys"
+      ],
+      "excludeDirs": [
+        "Logs",
+        "Updates",
+        "PowerToys Run\\Cache"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "notes": "FancyZones layouts, keyboard remaps, PowerToys Run plugins config. Restart PowerToys after import.",
+      "summary": "PowerToys settings (FancyZones layouts, keyboard remaps, PowerToys Run).",
+      "appCheck": [
+        "uninstall:PowerToys",
+        "%LOCALAPPDATA%\\PowerToys\\PowerToys.exe",
+        "%ProgramFiles%\\PowerToys\\PowerToys.exe"
+      ],
+      "appName": "PowerToys"
+    },
+    {
+      "id": "tools-keepass",
+      "app": "KeePass settings (database files are user content wherever you keep them)",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\KeePass"
+      ],
+      "notes": "KeePass.config.xml: last-opened databases, UI options. If a .kdbx lives outside OneDrive, copy it by hand.",
+      "summary": "KeePass preferences and the list of recently opened databases.",
+      "appCheck": [
+        "uninstall:KeePass"
+      ],
+      "appName": "KeePass"
+    },
+    {
+      "id": "tools-adobe-reader",
+      "app": "Adobe Acrobat / Reader preferences",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Adobe\\Adobe Acrobat",
+        "HKCU\\Software\\Adobe\\Acrobat Reader"
+      ],
+      "excludeKeys": [
+        "HKCU\\Software\\Adobe\\Adobe Acrobat\\DC\\AVGeneral\\cRecentFiles",
+        "HKCU\\Software\\Adobe\\Acrobat Reader\\DC\\AVGeneral\\cRecentFiles"
+      ],
+      "summary": "Adobe Acrobat / Reader preferences.",
+      "appCheck": [
+        "uninstall:Adobe Acrobat"
+      ],
+      "appName": "Adobe Acrobat / Reader"
+    },
+    {
+      "id": "tools-sysinternals",
+      "app": "Sysinternals tool settings and EULA acceptance",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Sysinternals"
+      ],
+      "summary": "Sysinternals tools preferences."
+    },
+    {
+      "id": "tools-everything",
+      "app": "Everything (voidtools) settings",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Everything"
+      ],
+      "excludeFiles": [
+        "*.db"
+      ],
+      "summary": "Everything search settings.",
+      "appCheck": [
+        "uninstall:^Everything"
+      ],
+      "appName": "Everything"
+    },
+    {
+      "id": "tools-paint-net",
+      "app": "Paint.NET settings",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\paint.net"
+      ],
+      "summary": "Paint.NET preferences.",
+      "appCheck": [
+        "uninstall:paint\\.net"
+      ],
+      "appName": "Paint.NET"
+    },
+    {
+      "id": "tools-sap-gui",
+      "app": "SAP GUI connections and options",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\SAP\\Common",
+        "%APPDATA%\\SAP\\SAP GUI"
+      ],
+      "excludeDirs": [
+        "Cache",
+        "Trace",
+        "Log"
+      ],
+      "notes": "saplogon.ini / SAPUILandscape.xml hold the connection list; options and scripting settings beside them.",
+      "summary": "SAP GUI connection list and options.",
+      "appCheck": [
+        "uninstall:SAP GUI"
+      ],
+      "appName": "SAP GUI"
+    },
+    {
+      "id": "tools-citrix",
+      "app": "Citrix Workspace user config",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Citrix"
+      ],
+      "excludeDirs": [
+        "Cache",
+        "Logs",
+        "Receiver\\Cache"
+      ],
+      "notes": "Store list and preferences. Usually re-pushed by the company; harmless to carry.",
+      "summary": "Citrix Workspace store list and preferences.",
+      "appCheck": [
+        "uninstall:Citrix Workspace"
+      ],
+      "appName": "Citrix Workspace"
+    },
+    {
+      "id": "tools-teams-classic",
+      "app": "Teams classic backgrounds",
+      "category": "comms",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Teams\\Backgrounds\\Uploads"
+      ],
+      "notes": "Custom meeting backgrounds (classic Teams). New Teams keeps them under the entry tools-teams-new.",
+      "summary": "Custom Teams meeting backgrounds (classic Teams)."
+    },
+    {
+      "id": "tools-teams-new",
+      "app": "New Teams custom backgrounds",
+      "category": "comms",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\Backgrounds\\Uploads"
+      ],
+      "notes": "Everything else in Teams is cloud-side.",
+      "summary": "Custom Teams meeting backgrounds.",
+      "appCheck": [
+        "appx:MSTeams"
+      ],
+      "appName": "Microsoft Teams"
+    },
+    {
+      "id": "tools-zoom",
+      "app": "Zoom client settings and virtual backgrounds",
+      "category": "comms",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Zoom\\data\\VirtualBkgnd_Custom",
+        "%APPDATA%\\Zoom\\data\\zoomus.ini"
+      ],
+      "summary": "Zoom settings and virtual backgrounds.",
+      "appCheck": [
+        "uninstall:Zoom"
+      ],
+      "appName": "Zoom"
+    },
+    {
+      "id": "tools-slack",
+      "app": "Slack desktop (nothing local worth carrying)",
+      "category": "comms",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Slack\\storage\\root-state.json"
+      ],
+      "notes": "Workspaces and preferences are cloud-side. root-state.json only remembers which workspaces were signed in.",
+      "summary": "Which Slack workspaces were signed in.",
+      "appCheck": [
+        "uninstall:Slack",
+        "appx:91750D7E.Slack"
+      ],
+      "appName": "Slack"
+    },
+    {
+      "id": "data-dbeaver",
+      "app": "DBeaver connections, drivers config, SQL scripts",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\DBeaverData\\workspace6\\General",
+        "%APPDATA%\\DBeaverData\\workspace6\\.metadata\\.plugins\\org.jkiss.dbeaver.core"
+      ],
+      "excludeDirs": [
+        ".metadata\\.plugins\\org.eclipse.core.resources",
+        "Logs"
+      ],
+      "excludeFiles": [
+        "credentials-config.json",
+        "*.log"
+      ],
+      "notes": "data-sources.json (connections without passwords), Scripts folder, preferences. Passwords are in credentials-config.json (secret entry data-dbeaver-credentials).",
+      "summary": "DBeaver database connections, scripts and preferences (without passwords).",
+      "appCheck": [
+        "uninstall:DBeaver"
+      ],
+      "appName": "DBeaver"
+    },
+    {
+      "id": "data-dbeaver-credentials",
+      "app": "DBeaver saved passwords",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%APPDATA%\\DBeaverData\\workspace6\\General\\.dbeaver\\credentials-config.json"
+      ],
+      "notes": "Encrypted with a fixed, publicly known key - as good as clear text.",
+      "summary": "DBeaver saved database passwords.",
+      "appCheck": [
+        "uninstall:DBeaver"
+      ],
+      "appName": "DBeaver"
+    },
+    {
+      "id": "data-ssms",
+      "app": "SQL Server Management Studio settings and registered servers",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\SQL Server Management Studio",
+        "%DOCUMENTS%\\SQL Server Management Studio",
+        "%APPDATA%\\Microsoft\\Microsoft SQL Server"
+      ],
+      "excludeDirs": [
+        "Backup Files",
+        "Templates"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "notes": "RegSrvr.xml (registered servers; saved SQL passwords in it are machine-encrypted), SqlStudio.bin (MRU), settings. Also HKCU keys in data-ssms-reg.",
+      "summary": "SQL Server Management Studio registered servers, settings and recent list.",
+      "appCheck": [
+        "uninstall:SQL Server Management Studio"
+      ],
+      "appName": "SQL Server Management Studio"
+    },
+    {
+      "id": "data-ssms-reg",
+      "app": "SSMS / SQL tools registry settings",
+      "category": "data",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Microsoft\\SQL Server Management Studio",
+        "HKCU\\Software\\Microsoft\\Microsoft SQL Server"
+      ],
+      "summary": "SQL Server Management Studio preferences (goes with the item above).",
+      "appCheck": [
+        "uninstall:SQL Server Management Studio"
+      ],
+      "appName": "SQL Server Management Studio"
+    },
+    {
+      "id": "data-azure-data-studio",
+      "app": "Azure Data Studio user settings",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\azuredatastudio\\User"
+      ],
+      "excludeDirs": [
+        "workspaceStorage",
+        "History",
+        "logs"
+      ],
+      "summary": "Azure Data Studio settings.",
+      "appCheck": [
+        "uninstall:Azure Data Studio"
+      ],
+      "appName": "Azure Data Studio"
+    },
+    {
+      "id": "data-sql-developer",
+      "app": "Oracle SQL Developer connections and preferences",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\SQL Developer"
+      ],
+      "excludeDirs": [
+        "tmp",
+        "logs",
+        "SqlHistory"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "notes": "connections.json: passwords are encrypted with a per-install key - re-enter them. Use File > Export Connections (with password) inside SQL Developer for a cleaner move.",
+      "summary": "Oracle SQL Developer connections and preferences (passwords must be re-entered)."
+    },
+    {
+      "id": "data-oracle-tns",
+      "app": "Oracle client user tnsnames (if kept in the profile)",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\Oracle\\network\\admin",
+        "%USERPROFILE%\\oracle\\network\\admin"
+      ],
+      "notes": "Machine-wide ORACLE_HOME\\network\\admin needs admin; a TNS_ADMIN env var pointing into the profile is captured with the user environment.",
+      "summary": "Oracle connection names file kept in your profile."
+    },
+    {
+      "id": "data-postman",
+      "app": "Postman local settings",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Postman\\Partitions"
+      ],
+      "excludeDirs": [
+        "Cache",
+        "Code Cache",
+        "GPUCache",
+        "blob_storage",
+        "Service Worker",
+        "logs"
+      ],
+      "notes": "Collections sync via the Postman account; Scratch Pad data is local - export collections from inside Postman to be safe.",
+      "summary": "Postman local settings.",
+      "appCheck": [
+        "uninstall:Postman"
+      ],
+      "appName": "Postman"
+    },
+    {
+      "id": "data-power-bi",
+      "app": "Power BI Desktop user settings",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\Power BI Desktop\\User.zip",
+        "%LOCALAPPDATA%\\Microsoft\\Power BI Desktop Store App\\User.zip",
+        "%APPDATA%\\Microsoft\\Power BI Desktop"
+      ],
+      "excludeDirs": [
+        "AnalysisServicesWorkspaces",
+        "CEIP",
+        "FrownSnapShot",
+        "TempSaves",
+        "Traces"
+      ],
+      "notes": "Data source credentials are machine-bound (DPAPI) and must be re-entered.",
+      "summary": "Power BI Desktop preferences.",
+      "appCheck": [
+        "uninstall:Power BI Desktop",
+        "appx:Microsoft.MicrosoftPowerBIDesktop"
+      ],
+      "appName": "Power BI Desktop"
+    },
+    {
+      "id": "data-tableau",
+      "app": "Tableau Desktop repository settings",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%DOCUMENTS%\\My Tableau Repository\\Datasources",
+        "%DOCUMENTS%\\My Tableau Repository\\Preferences.tps",
+        "%DOCUMENTS%\\My Tableau Repository\\Connectors"
+      ],
+      "summary": "Tableau preferences and saved data sources.",
+      "appCheck": [
+        "uninstall:Tableau"
+      ],
+      "appName": "Tableau"
+    },
+    {
+      "id": "data-rstudio",
+      "app": "R / RStudio user config",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\RStudio",
+        "%USERPROFILE%\\.Rprofile",
+        "%USERPROFILE%\\.Renviron",
+        "%DOCUMENTS%\\.Rprofile",
+        "%DOCUMENTS%\\.Renviron"
+      ],
+      "excludeDirs": [
+        "sessions",
+        "log"
+      ],
+      "notes": "Installed R packages live in Documents\\R\\win-library (OneDrive if Documents is redirected) - reinstall against the new R version.",
+      "summary": "R and RStudio preferences.",
+      "appCheck": [
+        "uninstall:RStudio"
+      ],
+      "appName": "RStudio"
+    },
+    {
+      "id": "data-excel-powerquery",
+      "app": "Power Query / Office data connections",
+      "category": "data",
+      "kind": "files",
+      "paths": [
+        "%DOCUMENTS%\\My Data Sources",
+        "%LOCALAPPDATA%\\Microsoft\\Power Query"
+      ],
+      "excludeDirs": [
+        "Cache",
+        "Traces"
+      ],
+      "notes": "ODC files. Saved credentials for data sources are machine-bound.",
+      "summary": "Saved Office data connections."
+    },
+    {
+      "id": "data-odbc-user",
+      "app": "User ODBC data sources",
+      "category": "data",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\ODBC\\ODBC.INI"
+      ],
+      "notes": "User DSNs. The driver named by each DSN must be installed on the new PC first (drivers are machine-level - from the portal).",
+      "summary": "Your ODBC data source names (the driver must be installed on the new PC first)."
+    },
+    {
+      "id": "dev-claude-code",
+      "app": "Claude Code (CLI) settings, memory, project notes",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.claude",
+        "%USERPROFILE%\\.claude.json"
+      ],
+      "excludeDirs": [
+        "cache",
+        "debug",
+        "shell-snapshots",
+        "statsig",
+        "todos",
+        "file-history",
+        "session-env",
+        "telemetry",
+        "downloads",
+        "paste-cache",
+        "ide"
+      ],
+      "excludeFiles": [
+        "*.jsonl",
+        "*.lock",
+        "*.log",
+        "*.tmp",
+        ".credentials.json",
+        "history.jsonl"
+      ],
+      "notes": "settings.json, CLAUDE.md, agents, skills, plugins, per-project memory. .claude.json holds OAuth account info and MCP server config - review it. The login token (.credentials.json) is a separate secret entry; simplest is to sign in again on the new PC. Session transcripts (*.jsonl, hundreds of MB) are excluded; per-project memory files are kept.",
+      "summary": "Claude Code settings, instructions and project memory."
+    },
+    {
+      "id": "dev-claude-code-credentials",
+      "app": "Claude Code login token",
+      "category": "secrets",
+      "kind": "files",
+      "secret": true,
+      "paths": [
+        "%USERPROFILE%\\.claude\\.credentials.json"
+      ],
+      "summary": "Claude Code login token (or simply sign in again)."
+    },
+    {
+      "id": "dev-claude-desktop",
+      "app": "Claude Desktop app config (MCP servers, preferences)",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Claude\\claude_desktop_config.json",
+        "%APPDATA%\\Claude\\config.json",
+        "%APPDATA%\\Claude\\settings.json",
+        "%APPDATA%\\Claude\\Preferences"
+      ],
+      "notes": "Only the config files; the app's multi-GB caches are left behind. MCP server entries reference local paths - check them after import.",
+      "summary": "Claude Desktop app configuration.",
+      "appCheck": [
+        "uninstall:^Claude",
+        "%LOCALAPPDATA%\\AnthropicClaude\\claude.exe"
+      ],
+      "appName": "Claude Desktop"
+    },
+    {
+      "id": "browser-opera",
+      "app": "Opera / Opera GX profile",
+      "category": "browser",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Opera Software"
+      ],
+      "excludeDirs": [
+        "BrowserMetrics",
+        "Cache",
+        "Code Cache",
+        "Crashpad",
+        "DawnCache",
+        "Download Service",
+        "GPUCache",
+        "GrShaderCache",
+        "IndexedDB",
+        "MediaFoundationWidevineCdm",
+        "OptGuideOnDeviceModel",
+        "OptimizationGuidePredictionModels",
+        "Safe Browsing",
+        "Service Worker",
+        "Session Storage",
+        "ShaderCache",
+        "WasmTtsEngine",
+        "WebStorage",
+        "WidevineCdm",
+        "adblocker_data",
+        "blob_storage",
+        "component_crx_cache",
+        "hyphen-data"
+      ],
+      "excludeFiles": [
+        "*.easylist",
+        "*.log",
+        "*.pma",
+        "Cookies",
+        "Cookies-journal",
+        "Login Data",
+        "Login Data-journal",
+        "adblocker_rules.json",
+        "lockfile"
+      ],
+      "notes": "Chromium-based: same DPAPI caveat as Chrome/Edge (no passwords/cookies). Opera must be closed.",
+      "summary": "Opera bookmarks, extensions and history.",
+      "appCheck": [
+        "uninstall:Opera",
+        "%LOCALAPPDATA%\\Programs\\Opera\\launcher.exe",
+        "%LOCALAPPDATA%\\Programs\\Opera GX\\launcher.exe"
+      ],
+      "appName": "Opera"
+    },
+    {
+      "id": "tools-joplin",
+      "app": "Joplin settings",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.config\\joplin-desktop\\settings.json",
+        "%USERPROFILE%\\.config\\joplin-desktop\\keymap-desktop.json",
+        "%USERPROFILE%\\.config\\joplin-desktop\\userchrome.css",
+        "%USERPROFILE%\\.config\\joplin-desktop\\userstyle.css"
+      ],
+      "notes": "Notes come back through Joplin sync; only preferences are carried. settings.json may contain the sync target password/key.",
+      "summary": "Joplin preferences (notes come back through Joplin sync).",
+      "appCheck": [
+        "uninstall:Joplin"
+      ],
+      "appName": "Joplin"
+    },
+    {
+      "id": "dev-bruno",
+      "app": "Bruno API client preferences",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\bruno\\preferences.json",
+        "%APPDATA%\\bruno\\config.json"
+      ],
+      "notes": "Collections are folders on disk wherever you saved them (copy those as content).",
+      "summary": "Bruno API client preferences (the collections themselves are in the next entry).",
+      "appCheck": [
+        "uninstall:Bruno"
+      ],
+      "appName": "Bruno"
+    },
+    {
+      "id": "dev-docker-desktop",
+      "app": "Docker Desktop settings",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Docker\\settings-store.json",
+        "%APPDATA%\\Docker\\settings.json",
+        "%APPDATA%\\Docker Desktop\\settings.json"
+      ],
+      "notes": "Resource limits, file sharing, proxies. Images/volumes are not copied (docker save / volume backup by hand). Docker Desktop itself needs admin to install - portal.",
+      "summary": "Docker Desktop settings.",
+      "appCheck": [
+        "uninstall:Docker Desktop"
+      ],
+      "appName": "Docker Desktop"
+    },
+    {
+      "id": "dev-virtualbox-cfg",
+      "app": "VirtualBox global config",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.VirtualBox\\VirtualBox.xml"
+      ],
+      "notes": "The VM list with absolute paths. The VM folders (VirtualBox VMs, GB-sized) must be moved by hand and re-registered.",
+      "summary": "VirtualBox list of virtual machines (the machines themselves are not copied).",
+      "appCheck": [
+        "uninstall:VirtualBox"
+      ],
+      "appName": "VirtualBox"
+    },
+    {
+      "id": "dev-arduino",
+      "app": "Arduino IDE preferences and board manager config",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Arduino15\\arduino-cli.yaml",
+        "%LOCALAPPDATA%\\Arduino15\\preferences.txt",
+        "%USERPROFILE%\\.arduinoIDE"
+      ],
+      "excludeDirs": [
+        "plugin-storage",
+        "logs"
+      ],
+      "notes": "Boards/libraries re-download from the manager (lists in the yaml). Sketchbook is user content.",
+      "summary": "Arduino IDE preferences and board list.",
+      "appCheck": [
+        "uninstall:Arduino IDE"
+      ],
+      "appName": "Arduino IDE"
+    },
+    {
+      "id": "tools-lmstudio-ollama",
+      "app": "LM Studio / Ollama settings (models excluded)",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.lmstudio\\settings.json",
+        "%USERPROFILE%\\.lmstudio\\.internal",
+        "%USERPROFILE%\\.ollama\\id_ed25519.pub"
+      ],
+      "notes": "Model weights (GB) are not copied; re-download them.",
+      "excludeFiles": [
+        "*.exe",
+        "*.dll",
+        "*.node"
+      ],
+      "summary": "LM Studio and Ollama settings (model files are not copied).",
+      "appCheck": [
+        "uninstall:LM Studio|Ollama"
+      ],
+      "appName": "LM Studio / Ollama"
+    },
+    {
+      "id": "win-notepad-tabs",
+      "app": "Notepad (Windows 11) - open and unsaved tabs, settings",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Packages\\Microsoft.WindowsNotepad_8wekyb3d8bbwe\\LocalState",
+        "%LOCALAPPDATA%\\Packages\\Microsoft.WindowsNotepad_8wekyb3d8bbwe\\Settings"
+      ],
+      "excludeDirs": [
+        "AC",
+        "TempState"
+      ],
+      "excludeFiles": [
+        "*.tmp"
+      ],
+      "appCheck": [
+        "appx:Microsoft.WindowsNotepad"
+      ],
+      "appName": "Notepad",
+      "summary": "Notepad tabs that were still open, including unsaved text, plus Notepad settings.",
+      "notes": "TabState holds every open tab, saved or not; Settings holds font, wrap and theme. Notepad must be CLOSED on both machines (it rewrites TabState while running and on the new PC it would overwrite the restored tabs).",
+      "needsClose": true
+    },
+    {
+      "id": "office-unsaved",
+      "app": "Office AutoRecover and unsaved documents",
+      "category": "office",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Microsoft\\Word",
+        "%APPDATA%\\Microsoft\\Excel",
+        "%APPDATA%\\Microsoft\\PowerPoint",
+        "%LOCALAPPDATA%\\Microsoft\\Office\\UnsavedFiles"
+      ],
+      "excludeDirs": [
+        "STARTUP",
+        "XLSTART",
+        "XLB",
+        "Lists"
+      ],
+      "excludeFiles": [
+        "*.tmp",
+        "~$*"
+      ],
+      "appCheck": [
+        "uninstall:Microsoft 365|Microsoft Office|Office 16",
+        "HKLM\\SOFTWARE\\Microsoft\\Office\\ClickToRun"
+      ],
+      "appName": "Microsoft Office",
+      "summary": "AutoRecover copies of documents that were open and not saved (Word .asd, Excel, PowerPoint) and the Unsaved Files folder.",
+      "notes": "Office writes AutoRecover files every 10 minutes while a document is open and keeps closed-without-saving copies for four days in UnsavedFiles. Save your work first; this is a safety net, not a replacement. After the restore, Office offers them under File > Info > Manage Document > Recover Unsaved Documents.",
+      "needsClose": true
+    },
+    {
+      "id": "win-clipboard-pinned",
+      "app": "Clipboard history - pinned items",
+      "category": "windows",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\Windows\\Clipboard\\Pinned"
+      ],
+      "summary": "Items you pinned in the clipboard history (Win+V). The unpinned history is memory-only and cannot be carried.",
+      "notes": "Only pinned clipboard items are stored on disk."
+    },
+    {
+      "id": "dev-bruno-collections",
+      "app": "Bruno API collections (the saved requests)",
+      "category": "dev",
+      "kind": "files",
+      "dynamic": "bruno-collections",
+      "excludeDirs": [
+        "node_modules",
+        ".git"
+      ],
+      "appCheck": [
+        "uninstall:Bruno"
+      ],
+      "appName": "Bruno",
+      "summary": "Your saved Bruno requests and environments: the collection folders Bruno knows about, wherever you keep them.",
+      "notes": "Folders are read from Bruno's preferences.json (default location) and from its workspace/UI state files; each folder that holds a bruno.json is taken. Restored to the same path (adjusted if the username differs). Environments with secrets travel as Bruno stores them."
+    },
+    {
+      "id": "dev-vscode-extensions-folder",
+      "app": "VS Code extensions (the installed files, not just the list)",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%USERPROFILE%\\.vscode\\extensions"
+      ],
+      "excludeFiles": [
+        "*.vsix",
+        "*.log"
+      ],
+      "appCheck": [
+        "uninstall:Microsoft Visual Studio Code",
+        "cmd:code",
+        "%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe",
+        "%ProgramFiles%\\Microsoft VS Code\\Code.exe"
+      ],
+      "appName": "Visual Studio Code",
+      "defaultOff": true,
+      "summary": "The extension files themselves. Usually not needed - the list is captured and extensions are reinstalled from the Marketplace. Tick this when the Marketplace is blocked at work. Can be large.",
+      "notes": "Copies %USERPROFILE%\\.vscode\\extensions including its extensions.json manifest (paths inside are rewritten when the username differs). Same architecture on both PCs is assumed (win32-x64). Restored before the Marketplace step, which then finds everything present."
+    },
+    {
+      "id": "apps-registry-other",
+      "app": "Settings of other programs kept in the registry",
+      "category": "tools",
+      "kind": "registry",
+      "dynamic": "hkcu-vendors",
+      "summary": "HKCU\\Software keys of programs the kit has no entry for (window layouts, recent files, options). Each key is restored only once its program is installed here.",
+      "notes": "Every vendor key under HKCU\\Software except Windows/Microsoft, hardware vendors, browsers (covered as files), corporate agents and the keys other catalog entries already cover. Keys over 5 MB are skipped. On restore a key is imported when a program whose name or publisher matches the key name is installed; the rest wait for the next run (or -RestoreEvenIfMissing)."
+    },
+    {
+      "id": "tools-mobaxterm",
+      "app": "MobaXterm sessions, settings and home folder",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\MobaXterm\\MobaXterm.ini",
+        "%APPDATA%\\MobaXterm\\home",
+        "%APPDATA%\\MobaXterm\\MobaXterm backup.zip",
+        "%DOCUMENTS%\\MobaXterm\\MobaXterm.ini",
+        "%DOCUMENTS%\\MobaXterm\\home"
+      ],
+      "excludeDirs": [
+        ".cache",
+        "tmp"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "appCheck": [
+        "uninstall:MobaXterm",
+        "%ProgramFiles(x86)%\\Mobatek\\MobaXterm\\MobaXterm.exe",
+        "%ProgramFiles%\\Mobatek\\MobaXterm\\MobaXterm.exe"
+      ],
+      "appName": "MobaXterm",
+      "needsClose": true,
+      "summary": "Saved sessions, macros, settings, SSH host keys (MobaXterm.ini) and the Linux-style home folder (.ssh keys, .bashrc). The big Cygwin root (slash) is left out.",
+      "notes": "Installer edition keeps MobaXterm.ini in %APPDATA%\\MobaXterm (older versions under Documents\\MobaXterm); the portable edition keeps it next to its exe - that one is found by the data-folder discovery or can be added with 'Add a folder'. Stored passwords live in the registry (entry tools-mobaxterm-reg). MobaXterm must be CLOSED on both machines: it rewrites the ini on exit."
+    },
+    {
+      "id": "tools-mobaxterm-reg",
+      "app": "MobaXterm stored credentials and passwords",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Mobatek"
+      ],
+      "appCheck": [
+        "uninstall:MobaXterm",
+        "%ProgramFiles(x86)%\\Mobatek\\MobaXterm\\MobaXterm.exe"
+      ],
+      "appName": "MobaXterm",
+      "summary": "Credentials and passwords MobaXterm saved (encrypted). They open on the new PC only if you had set a master password in MobaXterm; otherwise re-enter them once.",
+      "notes": "HKCU\\Software\\Mobatek\\MobaXterm: C = credentials, P = passwords, M = master password settings. Without a master password MobaXterm derives the key from the Windows account, so the copied values cannot be decrypted on another PC and have to be typed again (the session list itself is in the ini and works)."
+    },
+    {
+      "id": "tools-tabby",
+      "app": "Tabby terminal",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\tabby\\config.yaml",
+        "%APPDATA%\\tabby\\plugins\\package.json"
+      ],
+      "appCheck": [
+        "uninstall:Tabby"
+      ],
+      "appName": "Tabby",
+      "summary": "Tabby profiles, hotkeys and the plugin list."
+    },
+    {
+      "id": "tools-securecrt",
+      "app": "SecureCRT / SecureFX",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\VanDyke\\Config"
+      ],
+      "excludeDirs": [
+        "Logs"
+      ],
+      "appCheck": [
+        "uninstall:SecureCRT|SecureFX"
+      ],
+      "appName": "SecureCRT",
+      "summary": "SecureCRT sessions, key maps, global options (saved passwords are machine-bound - re-enter).",
+      "notes": "VanDyke stores sessions as .ini files under Config\\Sessions; passwords inside use a machine key."
+    },
+    {
+      "id": "tools-xshell",
+      "app": "Xshell / Xftp (NetSarang)",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%DOCUMENTS%\\NetSarang Computer"
+      ],
+      "excludeDirs": [
+        "Logs",
+        "Backup"
+      ],
+      "appCheck": [
+        "uninstall:Xshell|Xftp|Xmanager"
+      ],
+      "appName": "Xshell",
+      "summary": "Xshell and Xftp sessions and settings."
+    },
+    {
+      "id": "tools-rdm",
+      "app": "Remote Desktop Manager (Devolutions)",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Devolutions\\RemoteDesktopManager"
+      ],
+      "excludeDirs": [
+        "Logs",
+        "Cache",
+        "Temp",
+        "Updates"
+      ],
+      "appCheck": [
+        "uninstall:Remote Desktop Manager"
+      ],
+      "appName": "Remote Desktop Manager",
+      "summary": "Remote Desktop Manager local data sources and settings (vault passwords stay machine-bound)."
+    },
+    {
+      "id": "tools-beyondcompare",
+      "app": "Beyond Compare",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Scooter Software"
+      ],
+      "excludeDirs": [
+        "Beyond Compare 4\\BCState",
+        "Cache"
+      ],
+      "appCheck": [
+        "uninstall:Beyond Compare"
+      ],
+      "appName": "Beyond Compare",
+      "summary": "Beyond Compare settings, sessions and file formats."
+    },
+    {
+      "id": "tools-winmerge",
+      "app": "WinMerge",
+      "category": "tools",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\Thingamahoochie\\WinMerge"
+      ],
+      "appCheck": [
+        "uninstall:WinMerge"
+      ],
+      "appName": "WinMerge",
+      "summary": "WinMerge options, filters and recent list."
+    },
+    {
+      "id": "tools-tortoise",
+      "app": "TortoiseGit / TortoiseSVN",
+      "category": "dev",
+      "kind": "registry",
+      "keys": [
+        "HKCU\\Software\\TortoiseGit",
+        "HKCU\\Software\\TortoiseSVN",
+        "HKCU\\Software\\TortoiseOverlays"
+      ],
+      "appCheck": [
+        "uninstall:TortoiseGit|TortoiseSVN"
+      ],
+      "appName": "TortoiseGit / TortoiseSVN",
+      "summary": "TortoiseGit and TortoiseSVN settings, overlays, diff/merge tool choices."
+    },
+    {
+      "id": "dev-sourcetree",
+      "app": "Sourcetree",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%LOCALAPPDATA%\\Atlassian\\SourceTree"
+      ],
+      "excludeDirs": [
+        "git_local",
+        "git_extras",
+        "hg_local",
+        "Updates",
+        "extras"
+      ],
+      "excludeFiles": [
+        "*.log"
+      ],
+      "appCheck": [
+        "uninstall:Sourcetree"
+      ],
+      "appName": "Sourcetree",
+      "summary": "Sourcetree bookmarks (repository list) and settings."
+    },
+    {
+      "id": "dev-github-desktop",
+      "app": "GitHub Desktop",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\GitHub Desktop"
+      ],
+      "excludeDirs": [
+        "Cache",
+        "Code Cache",
+        "GPUCache",
+        "logs",
+        "blob_storage",
+        "Session Storage"
+      ],
+      "appCheck": [
+        "uninstall:GitHub Desktop"
+      ],
+      "appName": "GitHub Desktop",
+      "summary": "GitHub Desktop repository list and preferences (sign in again on the new PC)."
+    },
+    {
+      "id": "dev-fiddler",
+      "app": "Fiddler",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%DOCUMENTS%\\Fiddler2\\Scripts",
+        "%DOCUMENTS%\\Fiddler2\\Filters",
+        "%APPDATA%\\Telerik\\Fiddler"
+      ],
+      "appCheck": [
+        "uninstall:Fiddler"
+      ],
+      "appName": "Fiddler",
+      "summary": "Fiddler custom rules, filters and options."
+    },
+    {
+      "id": "dev-wireshark",
+      "app": "Wireshark",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Wireshark"
+      ],
+      "excludeDirs": [
+        "plugins",
+        "extcap"
+      ],
+      "excludeFiles": [
+        "recent*"
+      ],
+      "appCheck": [
+        "uninstall:Wireshark"
+      ],
+      "appName": "Wireshark",
+      "summary": "Wireshark profiles, colouring rules, filters and preferences."
+    },
+    {
+      "id": "dev-insomnia",
+      "app": "Insomnia API client",
+      "category": "dev",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\Insomnia"
+      ],
+      "excludeDirs": [
+        "Cache",
+        "Code Cache",
+        "GPUCache",
+        "logs",
+        "blob_storage",
+        "Session Storage",
+        "DawnCache"
+      ],
+      "appCheck": [
+        "uninstall:Insomnia"
+      ],
+      "appName": "Insomnia",
+      "summary": "Insomnia local collections, environments and settings."
+    },
+    {
+      "id": "tools-obsidian",
+      "app": "Obsidian",
+      "category": "tools",
+      "kind": "files",
+      "paths": [
+        "%APPDATA%\\obsidian\\obsidian.json"
+      ],
+      "appCheck": [
+        "uninstall:Obsidian"
+      ],
+      "appName": "Obsidian",
+      "summary": "Obsidian's list of vaults (the vault folders themselves are content - add them with Add a folder if they are outside OneDrive)."
+    }
+  ]
+}
