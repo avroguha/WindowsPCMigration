@@ -497,6 +497,138 @@ function Get-MigBrunoCollectionPaths {
     return @($keep)
 }
 
+# ---------- where browsers, PuTTY and friends really keep their data ----------
+
+# Chrome/Edge/Brave policies may hold ${user_name}, ${local_app_data}, ... in UserDataDir.
+function Expand-MigPolicyPath {
+    param([string]$Path)
+    $map = @{
+        'user_name' = "$env:USERNAME"; 'machine_name' = "$env:COMPUTERNAME"; 'client_name' = "$env:CLIENTNAME"; 'session_name' = "$env:SESSIONNAME"
+        'local_app_data' = "$env:LOCALAPPDATA"; 'roaming_app_data' = "$env:APPDATA"; 'profile' = "$env:USERPROFILE"; 'global_app_data' = "$env:ProgramData"
+        'documents' = [Environment]::GetFolderPath('MyDocuments'); 'program_files' = "$env:ProgramFiles"; 'windows' = "$env:SystemRoot"
+    }
+    $out = "$Path"
+    foreach ($m in [regex]::Matches($out, '\$\{([A-Za-z_]+)\}')) { $k = $m.Groups[1].Value.ToLower(); if ($map.ContainsKey($k)) { $out = $out.Replace($m.Value, $map[$k]) } }
+    return [Environment]::ExpandEnvironmentVariables($out)
+}
+
+# Command lines of every running copy of an exe (name without .exe).
+function Get-MigProcessCommandLines {
+    param([string]$Exe)
+    try { return @(Get-CimInstance Win32_Process -Filter ("Name = '{0}.exe'" -f $Exe) -ErrorAction Stop | ForEach-Object { "$($_.CommandLine)" } | Where-Object { $_ }) } catch { return @() }
+}
+
+# Every .lnk the user launches from (Desktop, Start menu, taskbar pins) that carries arguments: {File; Target; Arguments}. Cached per process.
+function Get-MigShortcutArgs {
+    if ($null -ne $script:ShortcutCache) { return $script:ShortcutCache }
+    $out = @()
+    $dirs = @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('CommonDesktopDirectory'), "$env:APPDATA\Microsoft\Windows\Start Menu", "$env:ProgramData\Microsoft\Windows\Start Menu", "$env:APPDATA\Microsoft\Internet Explorer\Quick Launch")
+    try { $sh = New-Object -ComObject WScript.Shell } catch { $script:ShortcutCache = @(); return @() }
+    foreach ($d in $dirs) {
+        if (-not $d -or -not (Test-Path -LiteralPath $d)) { continue }
+        foreach ($f in (Get-ChildItem -LiteralPath $d -Filter *.lnk -Recurse -File -ErrorAction SilentlyContinue)) {
+            try { $s = $sh.CreateShortcut($f.FullName); if ($s.Arguments) { $out += [pscustomobject]@{ File = $f.FullName; Target = "$($s.TargetPath)"; Arguments = "$($s.Arguments)" } } } catch { }
+        }
+    }
+    $script:ShortcutCache = @($out)
+    return $script:ShortcutCache
+}
+
+$script:BrowserInfo = @{
+    chrome   = @{ Default = '%LOCALAPPDATA%\Google\Chrome\User Data';              Policy = 'Software\Policies\Google\Chrome';        Exe = 'chrome' }
+    edge     = @{ Default = '%LOCALAPPDATA%\Microsoft\Edge\User Data';             Policy = 'Software\Policies\Microsoft\Edge';       Exe = 'msedge' }
+    brave    = @{ Default = '%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data'; Policy = 'Software\Policies\BraveSoftware\Brave';  Exe = 'brave' }
+    vivaldi  = @{ Default = '%LOCALAPPDATA%\Vivaldi\User Data';                    Policy = '';                                       Exe = 'vivaldi' }
+    chromium = @{ Default = '%LOCALAPPDATA%\Chromium\User Data';                   Policy = 'Software\Policies\Chromium';             Exe = 'chrome' }
+    opera    = @{ Default = '%APPDATA%\Opera Software';                            Policy = '';                                       Exe = 'opera' }
+    firefox  = @{ Default = '%APPDATA%\Mozilla\Firefox';                           Policy = '';                                       Exe = 'firefox' }
+}
+
+# Every folder a browser keeps (or is told to keep) its profiles in - policy, the running process, shortcuts, the default.
+# Returns {Path; Via} for folders that exist, the one in force first. People do move these, and that is where the bookmarks are.
+function Get-MigBrowserDataDirs {
+    param([Parameter(Mandatory)][string]$Browser)
+    $b = $script:BrowserInfo["$($Browser.ToLower())"]
+    if (-not $b) { return @() }
+    $found = New-Object System.Collections.ArrayList
+    $add = {
+        param($p, $via)
+        if (-not $p) { return }
+        $p = "$p".Trim().Trim('"').TrimEnd('\')
+        if ($p -notmatch '^[A-Za-z]:\\') { return }
+        if (-not (Test-Path -LiteralPath $p -PathType Container)) { return }
+        foreach ($f in $found) { if ($f.Path -eq $p) { return } }
+        [void]$found.Add([pscustomobject]@{ Path = $p; Via = $via })
+    }
+    $argRe = $(if ($Browser -eq 'firefox') { '(?i)(?:^|\s)-+profile\s+(?:"([^"]+)"|(\S+))' } else { '(?i)--user-data-dir=(?:"([^"]+)"|(\S+))' })
+    if ($Browser -eq 'firefox') {
+        # profiles.ini: IsRelative=0 entries live anywhere
+        $ini = Join-Path (Expand-MigPath $b.Default) 'profiles.ini'
+        if (Test-Path -LiteralPath $ini) {
+            $path = ''; $rel = '1'
+            foreach ($line in @(Get-Content -LiteralPath $ini -ErrorAction SilentlyContinue) + @('[end]')) {
+                if ($line -match '^\[') { if ($path -and $rel -eq '0') { & $add ($path -replace '/', '\') 'profiles.ini' }; $path = ''; $rel = '1'; continue }
+                if ($line -match '^Path=(.+)$') { $path = $matches[1].Trim() }
+                if ($line -match '^IsRelative=(\d)') { $rel = $matches[1] }
+            }
+        }
+    } elseif ($b.Policy) {
+        foreach ($hive in 'HKCU', 'HKLM') {
+            $v = $null
+            try { $v = (Get-ItemProperty -LiteralPath ("Registry::$hive\" + $b.Policy) -Name UserDataDir -ErrorAction Stop).UserDataDir } catch { }
+            if ($v) { & $add (Expand-MigPolicyPath "$v") "$hive policy" }
+        }
+    }
+    foreach ($cl in (Get-MigProcessCommandLines $b.Exe)) { if ($cl -match $argRe) { & $add ($matches[1] + $matches[2]) 'running' } }
+    $exeRe = '(?i)\\' + [regex]::Escape($b.Exe) + '(_proxy)?\.exe$'
+    foreach ($s in (Get-MigShortcutArgs)) { if ($s.Target -match $exeRe -and $s.Arguments -match $argRe) { & $add (Expand-MigPath ($matches[1] + $matches[2])) 'shortcut' } }
+    & $add (Expand-MigPath $b.Default) 'default'
+    return @($found.ToArray())
+}
+
+# Private key files (.ppk) and certificates that PuTTY / KiTTY sessions and Pageant shortcuts point at, wherever they are.
+function Get-MigPuttyKeyFiles {
+    $out = @{}
+    foreach ($root in 'HKCU:\Software\SimonTatham\PuTTY\Sessions', 'HKCU:\Software\9bis.com\KiTTY\Sessions') {
+        if (-not (Test-Path -LiteralPath $root)) { continue }
+        foreach ($s in (Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)) {
+            foreach ($vn in 'PublicKeyFile', 'DetachedCertificate') {
+                $v = "$($s.GetValue($vn))".Trim().Trim('"')
+                if (-not $v) { continue }
+                $pth = [Environment]::ExpandEnvironmentVariables($v)
+                if ($pth -match '^[A-Za-z]:\\' -and (Test-Path -LiteralPath $pth -PathType Leaf)) { $out[$pth.ToLower()] = $pth }
+            }
+        }
+    }
+    foreach ($s in (Get-MigShortcutArgs)) {
+        if ($s.Target -notmatch '(?i)pageant\.exe$') { continue }
+        foreach ($m in [regex]::Matches($s.Arguments, '"([^"]+\.ppk)"|(\S+\.ppk)')) { $pth = Expand-MigPath ($m.Groups[1].Value + $m.Groups[2].Value); if (Test-Path -LiteralPath $pth -PathType Leaf) { $out[$pth.ToLower()] = $pth } }
+    }
+    return @($out.Values | Sort-Object)
+}
+
+# The paths an entry covers on THIS computer: its catalog paths plus whatever its dynamic rule finds (absolute paths for the latter).
+function Get-MigEntryPaths {
+    param($Entry)
+    $static = @(@(Get-Prop $Entry 'paths' @()) | ForEach-Object { "$_" })
+    switch ("$(Get-Prop $Entry 'dynamic' '')") {
+        'bruno-collections' { return @(Get-MigBrunoCollectionPaths) }
+        'putty-keyfiles' { return @(Get-MigPuttyKeyFiles) }
+        'browser-dirs' {
+            $known = @{}; foreach ($sp in $static) { $known[(Expand-MigPath $sp).TrimEnd('\').ToLower()] = $true }
+            $extra = @()
+            foreach ($dd in @(Get-MigBrowserDataDirs "$(Get-Prop $Entry 'browser' '')")) {
+                $k = $dd.Path.TrimEnd('\').ToLower()
+                if ($known.ContainsKey($k)) { continue }
+                $inside = $false; foreach ($kk in @($known.Keys)) { if ($k.StartsWith($kk + '\')) { $inside = $true; break } }   # already packed with its parent
+                if (-not $inside) { $extra += $dd.Path; $known[$k] = $true }
+            }
+            return @($static + $extra)
+        }
+        default { return $static }
+    }
+}
+
 # ---------- extra entries: per-backup additions to the catalog (discovered data folders, folders the user added) ----------
 
 function Merge-MigExtraEntries {
@@ -559,7 +691,8 @@ function Get-MigDiscoveredAppData {
 # Browser extensions present on THIS machine (same shape the export inventory uses).
 function Get-MigBrowserExtensions {
     $bext = @()
-    foreach ($b in @(@{ N = 'Edge'; P = "$env:LOCALAPPDATA\Microsoft\Edge\User Data" }, @{ N = 'Chrome'; P = "$env:LOCALAPPDATA\Google\Chrome\User Data" })) {
+    $bdirs = @(); foreach ($bb in @(@{ N = 'Edge'; B = 'edge' }, @{ N = 'Chrome'; B = 'chrome' })) { foreach ($dd in @(Get-MigBrowserDataDirs $bb.B)) { $bdirs += @{ N = $bb.N; P = $dd.Path } } }
+    foreach ($b in $bdirs) {
         if (-not (Test-Path -LiteralPath $b.P)) { continue }
         Get-ChildItem -LiteralPath $b.P -Directory | Where-Object { $_.Name -eq 'Default' -or $_.Name -like 'Profile *' } | ForEach-Object {
             $prof = $_

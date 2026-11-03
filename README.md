@@ -132,17 +132,18 @@ automatically; registry values stored as `REG_EXPAND_SZ`/binary are counted and 
 
 ## What moves and what cannot
 
-**Moves (catalog, ~95 entries):** Windows personalisation and input, Explorer options, taskbar and Start pins,
+**Moves (catalog, ~120 entries):** Windows personalisation and input, Explorer options, taskbar and Start pins,
 Startup/SendTo, user fonts, console colours, RDP history, Sticky Notes, Windows Terminal, PowerShell profiles
 and history; Office options (Word/Excel/PowerPoint/Outlook view settings, recent lists), templates
 (Normal.dotm), signatures, custom dictionaries and AutoCorrect, Quick Access Toolbar, XLSTART/PERSONAL.XLSB,
-Word STARTUP, Outlook macros and PSTs; Edge/Chrome/Firefox/Opera profiles (bookmarks, extensions, history,
-open tabs); Git, VS Code (+ extension list), JetBrains, Notepad++, Sublime, Python/pip/conda, npm, Maven/Gradle,
-NuGet, Visual Studio, Claude Code/Desktop, Docker Desktop, Arduino; PuTTY, WinSCP, 7-Zip, Greenshot, ShareX,
+Word STARTUP, Outlook macros and PSTs; Edge/Chrome/Firefox/Opera/Brave/Vivaldi profiles (bookmarks, extensions,
+history, open tabs - found wherever the browser keeps them, see below); Git, VS Code (+ extension list), JetBrains, Notepad++, Sublime, Python/pip/conda, npm, Maven/Gradle,
+NuGet, Visual Studio, Claude Code/Desktop, Docker Desktop, Arduino; PuTTY (sessions, host keys and the .ppk files the
+sessions point at), SuperPuTTY, WinSCP, 7-Zip, Greenshot, ShareX,
 Snagit, PowerToys, KeePass, Adobe Reader, SAP GUI, Citrix; MobaXterm (ini, home folder, stored credentials), KiTTY,
 mRemoteNG, Royal TS, Tabby, SecureCRT, Xshell, Remote Desktop Manager, Beyond Compare, WinMerge, TortoiseGit/SVN,
 Sourcetree, GitHub Desktop, Fiddler, Wireshark, Insomnia, Obsidian; DBeaver, SSMS, Azure Data Studio, SQL Developer,
-Postman, Power BI, Tableau, RStudio, ODBC user DSNs; user environment variables and PATH, mapped drives,
+Postman (local collections, settings, working directory), Power BI, Tableau, RStudio, ODBC user DSNs; user environment variables and PATH, mapped drives,
 network printers and the default printer.
 
 **Cannot move, by design of Windows (the report lists them so you can redo them):**
@@ -157,6 +158,18 @@ network printers and the default printer.
 | User certificates with private keys | export right usually denied | re-enroll |
 | Wi-Fi keys, VPN, machine-wide software, drivers, ODBC drivers | admin / IT-managed | portal / service desk |
 | WSL distributions, VMs, Docker images, SDKs, model weights | GB-sized content | `wsl --export`, copy by hand; listed in discovery |
+
+### Where the wizard looks for browser data (bookmarks are wherever the profile is)
+
+A browser's bookmarks, history and extensions live inside its profile folder, and that folder is not always in the
+default place: a company policy (`UserDataDir`), a shortcut started with `--user-data-dir=...`, or a Firefox profile
+created somewhere else (`profiles.ini` with `IsRelative=0`, `firefox -profile <dir>`) all move it. For every browser
+entry the wizard therefore resolves the real folders in this order and packs **all** of them: the policy value (HKCU
+then HKLM, `${local_app_data}`-style variables expanded), the command line of a running copy of the browser, shortcuts
+on the Desktop, Start menu and taskbar, and finally the default folder. The selection page shows "Also found outside the
+default location" when that happens, and `export.log` names the folder. On restore a folder goes back to the same path
+(username adjusted); if that path cannot exist on the new PC (another drive letter), it is restored into the folder the
+browser uses there instead.
 
 ## Output layout
 
@@ -196,7 +209,9 @@ Every entry has a `summary` (the one-liner the wizard shows) and `notes` (the te
 ```
 
 Tokens: `%APPDATA%`, `%LOCALAPPDATA%`, `%USERPROFILE%`, `%DOCUMENTS%`, `%DESKTOP%` (the last two follow
-OneDrive folder redirection). `"secret": true` moves the entry to the encrypted bundle. `includeFiles` restricts
+OneDrive folder redirection). `"dynamic"` adds paths found at run time: `browser-dirs` (with `"browser"`: chrome,
+edge, brave, vivaldi, opera, firefox - the real profile folders), `bruno-collections`, `putty-keyfiles` (the .ppk files
+PuTTY/KiTTY sessions reference), `hkcu-vendors` (registry entries only). `"secret": true` moves the entry to the encrypted bundle. `includeFiles` restricts
 a folder to named files. Entries whose paths do not exist on the source are skipped silently, so the catalog can
 be generous. Use `discovery\*.csv` from a real export to decide what to add.
 

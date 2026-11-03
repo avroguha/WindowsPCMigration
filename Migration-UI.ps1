@@ -241,6 +241,8 @@ function Show-ExportSelect {
         switch ("$(Get-Prop $e 'dynamic' '')") {
             'hkcu-vendors' { $found = (@(Get-MigOtherVendorKeys $script:catalog).Count -gt 0) }
             'bruno-collections' { $found = (@(Get-MigBrunoCollectionPaths).Count -gt 0) }
+            'putty-keyfiles' { $found = (@(Get-MigPuttyKeyFiles).Count -gt 0) }
+            'browser-dirs' { foreach ($p in @(Get-MigEntryPaths $e)) { if (Test-Path -LiteralPath (Expand-MigPath $p)) { $found = $true; break } } }
             default {
                 if ((Get-Prop $e 'kind' 'files') -eq 'files') { foreach ($p in @(Get-Prop $e 'paths' @())) { if (Test-Path -LiteralPath (Expand-MigPath $p)) { $found = $true; break } } }
                 else { foreach ($k in @(Get-Prop $e 'keys' @())) { if (Test-MigRegKey $k) { $found = $true; break } } }
@@ -254,7 +256,7 @@ function Show-ExportSelect {
     [void]$tools.Children.Add((New-Button 'Select none' 'Secondary' { foreach ($cb in (Find-Checkboxes $script:Page.Content)) { if ($cb.Tag -is [hashtable] -or $cb.FontSize -eq 16) { $cb.IsChecked = $false } } }))
     [void]$root.Children.Add($tools)
     # open editors: unsaved tabs/documents are on disk only once the program has written them
-    $script:editorMap = @{ 'MobaXterm' = 'MobaXterm'; 'Notepad' = 'Notepad'; 'notepad++' = 'Notepad++'; 'Code' = 'VS Code'; 'WINWORD' = 'Word'; 'EXCEL' = 'Excel'; 'POWERPNT' = 'PowerPoint'; 'OUTLOOK' = 'Outlook'; 'msedge' = 'Edge'; 'chrome' = 'Chrome'; 'firefox' = 'Firefox' }
+    $script:editorMap = @{ 'Postman' = 'Postman'; 'MobaXterm' = 'MobaXterm'; 'Notepad' = 'Notepad'; 'notepad++' = 'Notepad++'; 'Code' = 'VS Code'; 'WINWORD' = 'Word'; 'EXCEL' = 'Excel'; 'POWERPNT' = 'PowerPoint'; 'OUTLOOK' = 'Outlook'; 'msedge' = 'Edge'; 'chrome' = 'Chrome'; 'firefox' = 'Firefox' }
     $script:openCard = New-Card 'Save your work and close these programs first' ''; $script:openCard.Background = '#FFFBEB'
     $script:openText = New-Text '' 13 'Normal' '#374151'; [void]$script:openCard.Child.Children.Add($script:openText)
     [void]$script:openCard.Child.Children.Add((New-Text 'Unsaved tabs in Notepad and Notepad++, unsaved editors in VS Code and Office AutoRecover copies are packed too - but only what the program has already written to disk. Closing the program asks you to save and flushes the rest.' 12 'Normal' '#6B7280' '0,4,0,0'))
@@ -269,8 +271,10 @@ function Show-ExportSelect {
     $script:state.SizeLabels = @{}
     foreach ($cat in $catOrder) {
         $rows = @($present | Where-Object { (Get-Prop $_ 'category' '') -eq $cat } | ForEach-Object {
-            $badge = ''
+            $badge = ''; $ent = $_
             switch ("$(Get-Prop $_ 'dynamic' '')") {
+                'putty-keyfiles' { $kf = @(Get-MigPuttyKeyFiles); $badge = "$($kf.Count) key file(s): " + (($kf | Select-Object -First 3) -join '; ') + $(if ($kf.Count -gt 3) { '; ...' } else { '' }) }
+                'browser-dirs' { $bd = @(@(Get-MigBrowserDataDirs "$(Get-Prop $ent 'browser' '')") | Where-Object { $_.Via -ne 'default' }); if ($bd.Count) { $badge = 'Also found outside the default location, taken too: ' + (($bd | ForEach-Object { "$($_.Path) ($($_.Via))" }) -join '; ') } }
                 'hkcu-vendors' { $vk = @(Get-MigOtherVendorKeys $script:catalog); $badge = "$($vk.Count) program(s): " + (($vk | Select-Object -First 12 | ForEach-Object { $_.Vendor }) -join ', ') + $(if ($vk.Count -gt 12) { ', ...' } else { '' }) }
                 'bruno-collections' { $bp = @(Get-MigBrunoCollectionPaths); $badge = "$($bp.Count) collection folder(s): " + (($bp | Select-Object -First 4) -join '; ') }
             }
@@ -327,7 +331,7 @@ function Show-ExportSelect {
         foreach ($e in $cat.entries) {
             if ($ids -notcontains $e.id) { continue }
             $bytes = [int64]0
-            foreach ($p in @(Get-Prop $e 'paths' @())) {
+            foreach ($p in @(Get-MigEntryPaths $e)) {
                 $x = Expand-MigPath $p; if (-not (Test-Path -LiteralPath $x)) { continue }
                 $it = Get-Item -LiteralPath $x -Force
                 if ($it.PSIsContainer) { $bytes += (Get-MigDirStats -Path $x -ExcludeDirs @(Get-Prop $e 'excludeDirs' @()) -ExcludeFiles @(Get-Prop $e 'excludeFiles' @()) -IncludeFiles @(Get-Prop $e 'includeFiles' @()) -MaxFileMB 500).Bytes } else { $bytes += $it.Length }

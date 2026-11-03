@@ -83,7 +83,7 @@ Write-MigLog ("Network: {0}{1}; OneDrive client {2}. Packing into a local OneDri
 if (-not (Wait-MigReachable -Path $Destination -Mode write -TimeoutMinutes 30 -What 'the backup folder')) { throw "Backup folder unreachable: $Destination" }
 
 # Unsaved work exists on disk only once the editor has written its recovery files, and open apps lock files.
-$editorMap = @{ 'MobaXterm' = 'MobaXterm'; 'Notepad' = 'Notepad'; 'notepad++' = 'Notepad++'; 'Code' = 'VS Code'; 'WINWORD' = 'Word'; 'EXCEL' = 'Excel'; 'POWERPNT' = 'PowerPoint'; 'OUTLOOK' = 'Outlook'; 'msedge' = 'Edge'; 'chrome' = 'Chrome'; 'firefox' = 'Firefox' }
+$editorMap = @{ 'Postman' = 'Postman'; 'MobaXterm' = 'MobaXterm'; 'Notepad' = 'Notepad'; 'notepad++' = 'Notepad++'; 'Code' = 'VS Code'; 'WINWORD' = 'Word'; 'EXCEL' = 'Excel'; 'POWERPNT' = 'PowerPoint'; 'OUTLOOK' = 'Outlook'; 'msedge' = 'Edge'; 'chrome' = 'Chrome'; 'firefox' = 'Firefox' }
 $openEditors = @($editorMap.Keys | Where-Object { Get-Process -Name $_ -ErrorAction SilentlyContinue } | ForEach-Object { $editorMap[$_] } | Sort-Object -Unique)
 if ($openEditors.Count -gt 0) { Write-MigLog "Still open: $($openEditors -join ', '). Unsaved tabs/documents are carried only if the program has written them to disk - save your work and close these before packing, then re-run with -Include <id> for their entries." 'WARN' }
 
@@ -215,7 +215,8 @@ if (-not $SkipInventory) {
 
     # --- browser extensions ---
     $bext = @()
-    foreach ($b in @(@{ N = 'Edge'; P = "$env:LOCALAPPDATA\Microsoft\Edge\User Data" }, @{ N = 'Chrome'; P = "$env:LOCALAPPDATA\Google\Chrome\User Data" })) {
+    $bdirs = @(); foreach ($bb in @(@{ N = 'Edge'; B = 'edge' }, @{ N = 'Chrome'; B = 'chrome' })) { foreach ($dd in @(Get-MigBrowserDataDirs $bb.B)) { $bdirs += @{ N = $bb.N; P = $dd.Path } } }
+    foreach ($b in $bdirs) {
         if (-not (Test-Path -LiteralPath $b.P)) { continue }
         Get-ChildItem -LiteralPath $b.P -Directory | Where-Object { $_.Name -eq 'Default' -or $_.Name -like 'Profile *' } | ForEach-Object {
             $prof = $_
@@ -402,12 +403,12 @@ function Export-Entry {
     $dynamic = "$(Get-Prop $Entry 'dynamic' '')"
     if ($kind -eq 'files') {
         $i = 0
-        $tokens = @(Get-Prop $Entry 'paths' @())
-        if ($dynamic -eq 'bruno-collections') { $tokens = @(Get-MigBrunoCollectionPaths) }   # absolute paths; the importer rewrites the profile part if needed
+        $tokens = @(Get-MigEntryPaths $Entry)   # catalog paths plus what the entry's dynamic rule finds (absolute; the importer rewrites the profile part if needed)
         foreach ($tok in $tokens) {
             $i++
             $src = Expand-MigPath $tok
             if (-not (Test-Path -LiteralPath $src)) { continue }
+            if ($dynamic -eq 'browser-dirs' -and $tok -notmatch '^%') { Write-MigLog "${id}: profile folder outside the default location, taken too: $src" }
             $dst = Join-Path $sdir $i
             $isDir = (Get-Item -LiteralPath $src -Force).PSIsContainer
             if ($isDir) {

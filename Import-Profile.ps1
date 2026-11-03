@@ -183,6 +183,12 @@ function Restore-Package {
         foreach ($item in $Pkg.items) {
             $target = Expand-MigPath "$($item.token)"
             if ($profileDiffers -and $target.StartsWith($oldProfile, [StringComparison]::OrdinalIgnoreCase)) { $target = $newProfile + $target.Substring($oldProfile.Length) }
+            # a browser folder that lived somewhere this PC does not have (another drive): put it where the browser looks here
+            if ("$(Get-Prop $entry 'dynamic' '')" -eq 'browser-dirs' -and "$($item.token)" -notmatch '^%' -and -not (Test-Path -LiteralPath (Split-Path -Qualifier $target))) {
+                $here = @(Get-MigBrowserDataDirs "$(Get-Prop $entry 'browser' '')"); $p0 = @(Get-Prop $entry 'paths' @())
+                $dflt = $(if ($here.Count) { $here[0].Path } elseif ($p0.Count) { Expand-MigPath "$($p0[0])" } else { '' })
+                if ($dflt) { $detail += "$target is not available on this PC - restored into $dflt instead"; $target = $dflt }
+            }
             $src = Join-Path $work "$($item.index)"
             if ("$($item.type)" -eq 'dir') {
                 if ($PSCmdlet.ShouldProcess($target, "restore folder from $id (index $($item.index))")) {
