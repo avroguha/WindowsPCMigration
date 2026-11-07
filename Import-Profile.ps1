@@ -227,14 +227,14 @@ function Restore-Package {
             $detail = @("imported $($doneVendors.Count) key(s)$(if ($doneVendors.Count) { ': ' + ($doneVendors -join ', ') })", "waiting for $($waitingVendors -join ', ') to be installed")
             Add-Result $id 'deferred' ($detail -join '; ')
             Write-MigLog ("{0,-28} {1,-8} {2}" -f $id, 'wait', ($detail -join '; ')) 'WAIT'
-            if (-not $dry) { $state.entries["$id"] = @{ status = 'deferred'; at = (Get-Date).ToString('o'); app = ($waitingVendors -join ', ') }; Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue }
+            if (-not $dry) { $state.entries["$id"] = @{ status = 'deferred'; at = (Get-Date).ToString('o'); app = ($waitingVendors -join ', ') }; Remove-MigDirectory $work }
             return
         }
     }
     $status = if ($dry) { 'what-if' } elseif ($detail -match 'FAILED') { 'partial' } else { 'ok' }
     Add-Result $id $status ($detail -join '; ')
     Write-MigLog ("{0,-28} {1,-8} {2}" -f $id, $status, ($detail -join '; ')) $(if ($status -eq 'partial') { 'WARN' } else { 'OK' })
-    if (-not $dry) { Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue; if ($plainZip -ne $zip) { Remove-Item -LiteralPath $plainZip -Force -ErrorAction SilentlyContinue } }
+    if (-not $dry) { Remove-MigDirectory $work; if ($plainZip -ne $zip) { Remove-Item -LiteralPath $plainZip -Force -ErrorAction SilentlyContinue } }
 }
 
 if (-not $SkipPackages) {

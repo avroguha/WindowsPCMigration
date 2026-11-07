@@ -278,11 +278,29 @@ function Wait-MigReachable {
 
 # ---------- zip ----------
 
+# Zips are made and opened with the bsdtar that ships in Windows 10 1803+ / 11 (C:\Windows\System32\tar.exe): it handles
+# paths longer than 260 characters on every machine, whereas .NET's ZipFile only does when the LongPathsEnabled policy is
+# on (it is off on most company PCs). Without tar.exe the .NET route is used and long paths are left out (see
+# Get-MigLongPathExclusions). The zip layout is the same either way: entries relative to the staged folder.
+$script:TarExe = $null
+function Get-MigTar {
+    if ($null -eq $script:TarExe) { $c = Get-Command tar.exe -CommandType Application -ErrorAction SilentlyContinue; $script:TarExe = $(if ($c) { $c.Source } else { '' }) }
+    return $script:TarExe
+}
+function Test-MigLongPathsSupported { return [bool](Get-MigTar) }
+
 function Compress-MigDirectory {
     param([Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$Zip)
     if (Test-Path -LiteralPath $Zip) { Remove-Item -LiteralPath $Zip -Force }
     $dir = Split-Path -Parent $Zip
     if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+    $tar = Get-MigTar
+    if ($tar) {
+        $out = & $tar -a -cf $Zip -C $Source . 2>&1
+        if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $Zip)) { return }
+        Write-MigLog "tar.exe could not write $Zip (exit $LASTEXITCODE): $(($out | Select-Object -First 3) -join ' | ') - falling back to .NET" 'WARN'
+        Remove-Item -LiteralPath $Zip -Force -ErrorAction SilentlyContinue
+    }
     try {
         Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
         [System.IO.Compression.ZipFile]::CreateFromDirectory($Source, $Zip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
@@ -294,14 +312,33 @@ function Compress-MigDirectory {
 
 function Expand-MigArchive {
     param([Parameter(Mandatory)][string]$Zip, [Parameter(Mandatory)][string]$Destination)
-    if (Test-Path -LiteralPath $Destination) { Remove-Item -LiteralPath $Destination -Recurse -Force }
+    if (Test-Path -LiteralPath $Destination) { Remove-MigDirectory $Destination }
     New-Item -ItemType Directory -Force -Path $Destination | Out-Null
+    $tar = Get-MigTar
+    if ($tar) {
+        $out = & $tar -xf $Zip -C $Destination 2>&1
+        if ($LASTEXITCODE -eq 0) { return }
+        Write-MigLog "tar.exe could not open $Zip (exit $LASTEXITCODE): $(($out | Select-Object -First 3) -join ' | ') - falling back to .NET" 'WARN'
+    }
     try {
         Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
         [System.IO.Compression.ZipFile]::ExtractToDirectory($Zip, $Destination)
     } catch {
         Expand-Archive -LiteralPath $Zip -DestinationPath $Destination -Force
     }
+}
+
+# Removes a staging folder that may hold paths longer than 260 characters (Remove-Item cannot): robocopy mirrors an
+# empty folder over it, which it can do at any depth, then the empty shell goes.
+function Remove-MigDirectory {
+    param([Parameter(Mandatory)][string]$Path)
+    if (-not $Path -or $Path.Length -lt 8 -or -not (Test-Path -LiteralPath $Path)) { return }
+    Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction SilentlyContinue
+    if (-not (Test-Path -LiteralPath $Path)) { return }
+    $empty = Join-Path $env:TEMP ('migempty-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Force -Path $empty | Out-Null
+    & robocopy.exe $empty $Path /MIR /NJH /NJS /NFL /NDL /NP /R:0 /W:0 | Out-Null
+    Remove-Item -LiteralPath $Path, $empty -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # ---------- encryption for the secrets bundle (AES-256-CBC, PBKDF2 200k) ----------

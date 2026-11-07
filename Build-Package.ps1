@@ -23,7 +23,7 @@ New-Item -ItemType Directory -Path $stage | Out-Null
 foreach ($f in $files) { Copy-Item -LiteralPath (Join-Path $root $f) -Destination $stage }
 Copy-Item -LiteralPath $exe -Destination (Join-Path $stage 'PCMigration.exe')
 $dist = Join-Path $root 'dist'; New-Item -ItemType Directory -Force -Path $dist | Out-Null
-Get-ChildItem $dist -Filter 'PCMigration-kit-*.zip' | Remove-Item -Force
+Get-ChildItem $dist -Filter 'PCMigration-kit-*.zip' | ForEach-Object { $f = $_; try { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop } catch { Write-Warning "old build still open, left in place: $($f.Name)" } }   # an older exe may be running
 $zip = Join-Path $dist "PCMigration-kit-$version.zip"
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip
 Remove-Item $stage -Recurse -Force

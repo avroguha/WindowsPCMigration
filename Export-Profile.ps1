@@ -412,10 +412,13 @@ function Export-Entry {
             $dst = Join-Path $sdir $i
             $isDir = (Get-Item -LiteralPath $src -Force).PSIsContainer
             if ($isDir) {
-                # paths that would be too long once staged: leave them out (zip cannot read them) and report them
-                $lp = Get-MigLongPathExclusions -Source $src -ExtraLength ($dst.Length - $src.Length)
-                $xd = @(Get-Prop $Entry 'excludeDirs' @()) + @($lp.Dirs)
-                if ($lp.Files.Count -gt 0) { $longSkipped += @($lp.Files) }
+                # paths over 260 characters: fine when tar.exe is there (it zips them); otherwise leave them out and report them
+                $xd = @(Get-Prop $Entry 'excludeDirs' @())
+                if (-not (Test-MigLongPathsSupported)) {
+                    $lp = Get-MigLongPathExclusions -Source $src -ExtraLength ($dst.Length - $src.Length)
+                    $xd += @($lp.Dirs)
+                    if ($lp.Files.Count -gt 0) { $longSkipped += @($lp.Files) }
+                }
                 $r = Invoke-MigRobocopy -Source $src -Destination $dst -ExcludeDirs $xd -ExcludeFiles @(Get-Prop $Entry 'excludeFiles' @()) -IncludeFiles @(Get-Prop $Entry 'includeFiles' @()) -MaxFileMB $MaxFileMB
                 if (-not $r.Ok) { $failed += "$src (robocopy $($r.ExitCode)): $($r.Output)" }
                 if ($r.Files -eq 0) { Remove-Item -LiteralPath $dst -Recurse -Force -ErrorAction SilentlyContinue; continue }
@@ -460,7 +463,7 @@ function Export-Entry {
     # the destination may be a share or a OneDrive folder that just went away: wait for it rather than fail
     if (-not (Wait-MigReachable -Path $Destination -Mode write -What 'the backup folder')) { throw "backup folder unreachable: $Destination" }
     Compress-MigDirectory -Source $sdir -Zip $zip
-    Remove-Item -LiteralPath $sdir -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-MigDirectory $sdir
     $rec = [ordered]@{ id = $id; app = $Entry.app; category = (Get-Prop $Entry 'category' ''); kind = $kind; secret = $isSecret; items = $items; files = $totalFiles; bytes = $totalBytes; zip = "$zipDir\$id.zip"; largeFilesSkipped = @($large | Sort-Object -Unique); longPathsSkipped = @($longSkipped | Sort-Object -Unique); bigFolders = $bigDirs; failures = $failed; needsRestart = (Get-Prop $Entry 'needsRestart' ''); notes = (Get-Prop $Entry 'notes' '') }
     if ($isSecret -and $SecretsPassword) {
         Protect-MigFile -Path $zip -OutFile ($zip + '.enc') -Password $SecretsPassword

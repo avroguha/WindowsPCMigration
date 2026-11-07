@@ -79,11 +79,28 @@ namespace PCMigration.Pages
         private void Search_TextChanged(object sender, TextChangedEventArgs e) { SearchHint.Visibility = Search.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed; List.Filter(Search.Text); }
         private void SelectAll_Click(object sender, RoutedEventArgs e) { foreach (var g in Session.ExportGroups) if (g.Key != "secrets") g.IsChecked = true; }
         private void SelectNone_Click(object sender, RoutedEventArgs e) { List.SetAll(false); }
+        /// <summary>Why a folder need not be backed up: it is inside OneDrive (any root, incl. redirected Desktop/Documents) or is the backup location itself.</summary>
+        internal static string AlreadySyncedReason(string path, Environment2 env)
+        {
+            var roots = new List<string>();
+            foreach (var v in new[] { "OneDrive", "OneDriveCommercial", "OneDriveConsumer" }) { var r = System.Environment.GetEnvironmentVariable(v); if (!string.IsNullOrEmpty(r)) roots.Add(r); }
+            if (env != null && !string.IsNullOrEmpty(env.OneDrive)) roots.Add(env.OneDrive);
+            foreach (var r in roots) if (Under(path, r)) return "This folder is inside OneDrive (" + r.TrimEnd('\\') + "), so it already travels to the new computer with your OneDrive files. Backing it up again would only store a second copy there.";
+            if (env != null && !string.IsNullOrEmpty(env.BackupRoot) && Under(path, env.BackupRoot)) return "This folder is the backup location itself. Backing it up would copy the backup into the backup.";
+            return null;
+        }
+        private static bool Under(string path, string root)
+        {
+            var p = path.TrimEnd('\\') + "\\"; var r = root.TrimEnd('\\') + "\\";
+            return p.StartsWith(r, StringComparison.OrdinalIgnoreCase);
+        }
         private async void AddFolder_Click(object sender, RoutedEventArgs e)
         {
-            var path = Native.PickFolder(Window, "Pick a folder to carry to the new PC (it is restored to the same path there)", null);
+            var path = App.TestAddFolder ?? Native.PickFolder(Window, "Pick a folder to carry to the new PC (it is restored to the same path there)", null);
             if (path == null) return;
             path = path.TrimEnd('\\');
+            var why = AlreadySyncedReason(path, Session.Env);
+            if (why != null && !await Window.Dialog("Already in OneDrive", why + "\n\n" + path, "Add it anyway", "Do not add")) return;
             if (Session.CustomItems.Any(c => string.Equals(((IList<object>)Json.Arr(c.Extra, "paths"))[0] as string, path, StringComparison.OrdinalIgnoreCase))) return;
             double mb = 0; try { var r = await Engine.Probe("dirstats", "-Path " + Engine.Quote(path)); mb = Json.Num(r, "mb"); } catch { }
             var n = Session.CustomItems.Count + 1;

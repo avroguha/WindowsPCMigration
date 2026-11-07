@@ -19,6 +19,13 @@ namespace PCMigration
         private const int WM_NCHITTEST = 0x0084, WM_NCLBUTTONDOWN = 0x00A1, WM_NCLBUTTONUP = 0x00A2, WM_NCMOUSELEAVE = 0x02A2;
         private const int HTMAXBUTTON = 9, HTCLIENT = 1;
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool GetDiskFreeSpaceEx(string path, out ulong freeToCaller, out ulong total, out ulong totalFree);
+        /// <summary>Free bytes for the caller at a local or UNC path; null when the location cannot be asked.</summary>
+        public static double? FreeMb(string path)
+        {
+            try { ulong free, total, totalFree; var p = path.EndsWith("\\") ? path : path + "\\"; if (GetDiskFreeSpaceEx(p, out free, out total, out totalFree)) return free / 1048576.0; } catch { }
+            return null;
+        }
         public static int OsBuild
         {
             get

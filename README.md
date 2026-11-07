@@ -90,8 +90,19 @@ or the new PC reading files that are still cloud-only - every package is precede
 if the location is gone, the script logs PAUSE, the app shows "Paused - waiting", and it resumes by itself
 when the location is back (up to 60 minutes, then it stops cleanly; re-running continues where it left off).
 
-**Paths longer than 260 characters** (typically caches of editor extensions) cannot be zipped by Windows'
-own libraries. They are detected before copying, left out, and listed in `report.md`.
+**Paths longer than 260 characters** (deep project trees, caches of editor extensions) are packed and restored like
+any other: the zips are made and opened with the `tar.exe` that ships in Windows 10 1803+ and 11 (libarchive), which
+handles long paths on every machine, while robocopy does the copying. Only on a Windows without `tar.exe` does the
+kit fall back to .NET's ZipFile, which cannot read such paths; they are then detected before copying, left out, and
+listed in `report.md`.
+
+**Space.** The Review page reads the free space at the backup location (local drive or share) and compares it with
+the selection's size before compression: green when there is room, amber when it is tight, red - and a question
+before packing - when there is not enough.
+
+**Folders already in OneDrive.** Adding a folder that lives inside OneDrive (or inside the backup location itself)
+brings up a warning: it already travels with OneDrive, so backing it up only stores a second copy. It can still be
+added deliberately.
 
 **Programs the kit does not know (data folders).** The "what to take" page lists every AppData folder that no
 catalog entry covers, with its size and the program it seems to belong to, caches excluded; small ones with a

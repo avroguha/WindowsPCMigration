@@ -8,6 +8,7 @@ namespace PCMigration
     public partial class App : Application
     {
         public static string StartMode;   // --mode export|import (lab tests)
+        public static string TestAddFolder;   // --test-add-folder <path>: Add a folder takes this path instead of opening the picker (UI tests)
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -19,6 +20,7 @@ namespace PCMigration
                 if (a == "--kit" && i + 1 < e.Args.Length) kit = e.Args[++i];
                 else if (a == "--root" && i + 1 < e.Args.Length) root = e.Args[++i];
                 else if (a == "--mode" && i + 1 < e.Args.Length) StartMode = e.Args[++i];
+                else if (a == "--test-add-folder" && i + 1 < e.Args.Length) TestAddFolder = e.Args[++i];
                 else if (a == "--theme" && i + 1 < e.Args.Length) { ThemeMode m; if (Enum.TryParse(e.Args[++i], true, out m)) Theme.ForceMode(m); }
             }
             if (!string.IsNullOrEmpty(root)) Kit.BackupRootOverride = root;

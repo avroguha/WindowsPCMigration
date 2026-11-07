@@ -33,6 +33,7 @@ namespace PCMigration.Pages
                 NetBar.Visibility = Visibility.Visible;
                 NetBar.Message = env.NetworkAvailable ? "Packing into a local OneDrive folder needs no network; the upload happens afterwards. Wait for the green tick on the folder before using the new computer." : "No network right now. Packing still works (the folder is local); OneDrive uploads it when the network is back.";
                 NetBar.Title = env.OneDriveRunning ? "OneDrive is running" : "OneDrive is not running"; NetBar.Severity = env.OneDriveRunning ? Controls.Severity.Informational : Controls.Severity.Warning;
+                CheckSpace(selected.Sum(i => i.SizeMb ?? 0), env.BackupRoot);
                 Note.Text = "Open programs lock their files: whatever is still open is packed only partly and listed on the result page. A second pack into the same folder merges and fills the gaps.";
                 Window.SetFooter("Pack my settings", true, true, "", StartExport, () => Window.GoToStep("select"));
             }
@@ -54,6 +55,17 @@ namespace PCMigration.Pages
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) }; _timer.Tick += (s, e) => RefreshOpen(); _timer.Start();
         }
         public override void OnLeave() { if (_timer != null) _timer.Stop(); }
+        private double _needMb, _freeMb = -1;
+        /// <summary>Is there room for the backup? Uncompressed size is the conservative bound (zips come out smaller).</summary>
+        private void CheckSpace(double needMb, string root)
+        {
+            _needMb = needMb; var free = Native.FreeMb(root); _freeMb = free ?? -1;
+            SpaceBar.Visibility = Visibility.Visible;
+            if (free == null) { SpaceBar.Severity = Controls.Severity.Warning; SpaceBar.Title = "Free space at the backup location could not be read"; SpaceBar.Message = "Make sure " + root + " has room for about " + Fmt.Mb(needMb) + "."; return; }
+            if (free.Value < needMb) { SpaceBar.Severity = Controls.Severity.Error; SpaceBar.Title = "Not enough space at the backup location"; SpaceBar.Message = Fmt.Mb(free.Value) + " free, about " + Fmt.Mb(needMb) + " needed before compression. Untick large items, free up space, or change the backup location (bottom left)."; }
+            else if (free.Value < needMb * 1.5) { SpaceBar.Severity = Controls.Severity.Warning; SpaceBar.Title = "Space is tight at the backup location"; SpaceBar.Message = Fmt.Mb(free.Value) + " free for about " + Fmt.Mb(needMb) + ". Zips come out smaller, so it will probably fit - but a OneDrive folder also needs the same room in the cloud."; }
+            else { SpaceBar.Severity = Controls.Severity.Success; SpaceBar.Title = "Enough space at the backup location"; SpaceBar.Message = Fmt.Mb(free.Value) + " free for about " + Fmt.Mb(needMb) + "."; }
+        }
         private void ForceCb_Changed(object sender, RoutedEventArgs e) { Session.RestoreEvenIfMissing = ForceCb.IsChecked == true; }
 
         private void RefreshOpen()
@@ -76,6 +88,7 @@ namespace PCMigration.Pages
 
         private async void StartExport()
         {
+            if (_freeMb >= 0 && _freeMb < _needMb && !await Window.Dialog("Not enough space", "The backup location has " + Fmt.Mb(_freeMb) + " free and about " + Fmt.Mb(_needMb) + " is needed. Packing would stop half way. Change the backup location or untick large items first.", "Pack anyway", "Go back")) return;
             if (_running.Count > 0 && !await Window.Dialog("Programs are still open", string.Join(", ", _running.Select(Apps.Friendly).Distinct()) + ". Anything not yet written to disk by these programs will be missing from the backup. Pack anyway?", "Pack anyway", "Go back")) return;
             var ids = Session.SelectedIds;
             var extras = Session.ExportGroups.SelectMany(g => g.Items).Where(i => i.Extra != null && (ids.Contains(i.Id) || i.Category == "custom")).Select(i => i.Extra).ToList();

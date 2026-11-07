@@ -28,7 +28,7 @@ $proj = Join-Path $root 'src\PCMigration\PCMigration.csproj'
 if ($LASTEXITCODE -ne 0) { throw "dotnet build failed ($LASTEXITCODE)" }
 $built = Join-Path $root 'src\PCMigration\bin\Release\net48\PCMigration.exe'
 $dist = Join-Path $root 'dist'; New-Item -ItemType Directory -Force -Path $dist | Out-Null
-Get-ChildItem $dist -Filter 'PCMigration-*.exe' | Remove-Item -Force
+Get-ChildItem $dist -Filter 'PCMigration-*.exe' | ForEach-Object { $f = $_; try { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop } catch { Write-Warning "old build still open, left in place: $($f.Name)" } }   # an older exe may be running
 $exe = Join-Path $dist "PCMigration-$version.exe"
 Copy-Item -LiteralPath $built -Destination $exe -Force
 $fv = (Get-Item $exe).VersionInfo.FileVersion

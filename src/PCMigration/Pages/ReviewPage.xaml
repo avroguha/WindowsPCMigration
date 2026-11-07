@@ -7,6 +7,7 @@
       <Border Grid.Column="2" Style="{StaticResource Card}" Margin="0" Padding="18,14"><StackPanel><TextBlock x:Name="T3" Style="{StaticResource Title}" FontSize="32"/><TextBlock x:Name="T3l" Style="{StaticResource Caption}"/></StackPanel></Border>
     </Grid>
     <c:InfoBar x:Name="OpenBar" Severity="Warning" ActionText="Close them for me" Visibility="Collapsed"/>
+    <c:InfoBar x:Name="SpaceBar" Severity="Informational" Visibility="Collapsed"/>
     <c:InfoBar x:Name="NetBar" Severity="Informational" Visibility="Collapsed"/>
     <Border Style="{StaticResource Card}" Padding="20,16">
       <StackPanel>
