@@ -15,10 +15,11 @@
           <StackPanel>
             <Grid Margin="0,0,0,6">
               <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsThreeState="False" VerticalContentAlignment="Center" AutomationProperties.Name="{Binding Title, StringFormat=group:{0}}">
+              <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsThreeState="False" VerticalContentAlignment="Center" AutomationProperties.Name="{Binding Title, StringFormat=group:{0}}" Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}">
                 <StackPanel Orientation="Horizontal"><TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="16" Margin="0,0,10,0" Foreground="{DynamicResource AccentText}"/><TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrong}" FontSize="15"/></StackPanel>
               </CheckBox>
-              <TextBlock Grid.Column="2" Text="{Binding Summary}" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+              <StackPanel Orientation="Horizontal" Visibility="{Binding HasNoItems, Converter={StaticResource BoolToVis}}"><TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="16" Margin="0,0,10,0" Foreground="{DynamicResource AccentText}"/><TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrong}" FontSize="15"/></StackPanel>
+              <TextBlock Grid.Column="2" Text="{Binding Summary}" Style="{StaticResource Caption}" VerticalAlignment="Center" Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}"/>
             </Grid>
             <TextBlock Text="{Binding Subtitle}" Margin="30,0,0,8"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Style.Triggers><DataTrigger Binding="{Binding Subtitle}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
             <ItemsControl ItemsSource="{Binding Items}" Margin="30,0,0,0">

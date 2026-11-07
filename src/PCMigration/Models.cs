@@ -50,7 +50,7 @@ namespace PCMigration
         private bool _checked; public bool IsChecked { get { return _checked; } set { if (Set(ref _checked, value)) { if (Group != null) Group.ChildChanged(); } } }
         private bool _enabled = true; public bool IsEnabled { get { return _enabled; } set { Set(ref _enabled, value); } }
         private double? _mb; public double? SizeMb { get { return _mb; } set { if (Set(ref _mb, value)) { Raise("SizeText"); if (Group != null) Group.ChildChanged(); } } }
-        public string SizeText { get { return Fmt.Mb(_mb); } }
+        public string SizeText { get { return _mb == null ? "measuring…" : Fmt.Mb(_mb); } }
         private string _badge; public string Badge { get { return _badge; } set { if (Set(ref _badge, value)) Raise("HasBadge"); } }
         public bool HasBadge { get { return !string.IsNullOrEmpty(_badge); } }
         public string BadgeKind { get; set; }   // info | success | warning

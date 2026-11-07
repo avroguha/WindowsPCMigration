@@ -47,6 +47,19 @@ namespace PCMigration.Pages
                 sp.Children.Add(row);
                 return sp;
             }
+            if (g.Key == "custom")
+            {
+                var sp = new StackPanel();
+                if (g.Items.Count == 0) sp.Children.Add(new TextBlock { Text = "No folders added yet.", Style = (Style)FindResource("Caption"), Margin = new Thickness(0, 0, 0, 8) });
+                var btn = new Button { HorizontalAlignment = HorizontalAlignment.Left };
+                var row = new StackPanel { Orientation = Orientation.Horizontal };
+                row.Children.Add(new TextBlock { Text = "", Style = (Style)FindResource("Icon"), FontSize = 14, Margin = new Thickness(0, 0, 8, 0) });
+                row.Children.Add(new TextBlock { Text = "Add a folder…" });
+                btn.Content = row; System.Windows.Automation.AutomationProperties.SetName(btn, "Add a folder (group)");
+                btn.Click += AddFolder_Click;
+                sp.Children.Add(btn);
+                return sp;
+            }
             return null;
         }
         private void UpdateTotals()
@@ -54,6 +67,7 @@ namespace PCMigration.Pages
             var items = Session.ExportGroups.SelectMany(g => g.Items).ToList();
             var on = items.Where(i => i.IsChecked).ToList();
             Totals.Text = on.Count + " of " + items.Count + " selected  ·  " + (on.Any(i => i.SizeMb == null) ? "measuring… " : "") + Fmt.Mb(on.Sum(i => i.SizeMb ?? 0));
+            Window.SetFooterSummary(Fmt.Plural(on.Count, "item") + "  ·  " + Fmt.Mb(on.Sum(i => i.SizeMb ?? 0)) + (on.Any(i => i.SizeMb == null) ? "+" : ""));
         }
         private void RefreshOpen()
         {

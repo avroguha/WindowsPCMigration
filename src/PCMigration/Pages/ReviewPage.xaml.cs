@@ -49,7 +49,7 @@ namespace PCMigration.Pages
                 Note.Text = "Settings of a program that is still open are skipped this time and offered again on the next run.";
                 Window.SetFooter("Restore my settings", true, true, "", StartImport, () => Window.GoToStep("select"));
             }
-            GroupRows.ItemsSource = groups.Where(g => g.Items.Any(i => Session.SelectedIds.Contains(i.Id))).Select(g => new { g.Glyph, g.Title, Count = g.Items.Count(i => Session.SelectedIds.Contains(i.Id)) + " of " + g.Items.Count, Names = string.Join(", ", g.Items.Where(i => Session.SelectedIds.Contains(i.Id)).Select(i => i.Name)) }).ToList();
+            GroupRows.ItemsSource = groups.Where(g => g.Items.Any(i => Session.SelectedIds.Contains(i.Id))).Select(g => new { g.Glyph, g.Title, Count = g.Items.Count(i => Session.SelectedIds.Contains(i.Id)) + " of " + g.Items.Count + "  ·  " + Fmt.Mb(g.Items.Where(i => Session.SelectedIds.Contains(i.Id)).Sum(i => i.SizeMb ?? 0)), Names = string.Join(", ", g.Items.Where(i => Session.SelectedIds.Contains(i.Id)).Select(i => i.Name)) }).ToList();
             RefreshOpen();
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) }; _timer.Tick += (s, e) => RefreshOpen(); _timer.Start();
         }

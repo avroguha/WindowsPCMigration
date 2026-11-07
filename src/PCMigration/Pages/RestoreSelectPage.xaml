@@ -4,12 +4,12 @@
     <c:InfoBar x:Name="ErrorBar" Severity="Error" ActionText="Try again" Visibility="Collapsed"/>
     <Grid x:Name="Toolbar" Margin="0,0,0,12" Visibility="Collapsed">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-      <StackPanel Orientation="Horizontal">
-        <Grid Width="280" Margin="0,0,8,0"><TextBox x:Name="Search" Padding="32,5,10,5" TextChanged="Search_TextChanged" AutomationProperties.Name="Search"/><TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="14" HorizontalAlignment="Left" Margin="11,0,0,0" Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False"/><TextBlock x:Name="SearchHint" Text="Search settings" Style="{StaticResource BodySecondary}" Margin="33,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/></Grid>
-        <Button Content="Select all" Click="SelectAll_Click" Margin="0,0,8,0"/>
-        <Button Content="Select none" Click="SelectNone_Click"/>
-      </StackPanel>
-      <Border Grid.Column="1" Style="{StaticResource Pill}" Background="{DynamicResource AccentSoft}" Padding="12,5"><TextBlock x:Name="Totals" Style="{StaticResource PillText}" Foreground="{DynamicResource AccentText}"/></Border>
+      <WrapPanel>
+        <Grid Width="240" Margin="0,0,8,4"><TextBox x:Name="Search" Padding="32,5,10,5" TextChanged="Search_TextChanged" AutomationProperties.Name="Search"/><TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="14" HorizontalAlignment="Left" Margin="11,0,0,0" Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False"/><TextBlock x:Name="SearchHint" Text="Search settings" Style="{StaticResource BodySecondary}" Margin="33,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/></Grid>
+        <Button Content="Select all" Click="SelectAll_Click" Margin="0,0,8,4"/>
+        <Button Content="Select none" Click="SelectNone_Click" Margin="0,0,8,4"/>
+      </WrapPanel>
+      <Border Grid.Column="1" Style="{StaticResource Pill}" Background="{DynamicResource AccentSoft}" Padding="12,5" Margin="8,0,0,4" VerticalAlignment="Top"><TextBlock x:Name="Totals" Style="{StaticResource PillText}" Foreground="{DynamicResource AccentText}"/></Border>
     </Grid>
     <c:InfoBar x:Name="OpenBar" Severity="Warning" Title="Some programs must be closed first" ActionText="Close them for me" Visibility="Collapsed"/>
     <c:SelectionList x:Name="List"/>

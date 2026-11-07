@@ -128,10 +128,12 @@ namespace PCMigration
         {
             NextBtn.Content = next; NextBtn.IsEnabled = nextEnabled; NextBtn.Visibility = next == null ? Visibility.Collapsed : Visibility.Visible;
             BackBtn.IsEnabled = backEnabled; BackBtn.Visibility = onBack == null ? Visibility.Collapsed : Visibility.Visible;
-            FooterNote.Text = note ?? ""; _onNext = onNext; _onBack = onBack;
+            FooterNote.Text = note ?? ""; _onNext = onNext; _onBack = onBack; SetFooterSummary(null);
         }
         public void SetNextEnabled(bool on) { NextBtn.IsEnabled = on; }
         public void SetNote(string note) { FooterNote.Text = note ?? ""; }
+        /// <summary>Count and size of the current selection, shown next to the command buttons; null hides it.</summary>
+        public void SetFooterSummary(string text) { FooterSummary.Text = text ?? ""; FooterSummary.Visibility = string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible; }
         private void NextBtn_Click(object sender, RoutedEventArgs e) { if (_onNext != null) _onNext(); }
         private void BackBtn_Click(object sender, RoutedEventArgs e) { if (_onBack != null) _onBack(); }
         private void Step_Click(object sender, RoutedEventArgs e)

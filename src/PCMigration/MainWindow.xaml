@@ -39,11 +39,12 @@
             <TextBlock x:Name="NetGlyph" Text="&#xE839;" Style="{StaticResource Icon}" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,2,0,0" Foreground="{DynamicResource TextSecondary}"/>
             <StackPanel Grid.Column="1"><TextBlock x:Name="NetText" Style="{StaticResource Caption}" Foreground="{DynamicResource TextPrimary}"/><TextBlock x:Name="NetSub" Style="{StaticResource Caption}"/></StackPanel></Grid>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="8,4,0,0">
+        <TextBlock x:Name="VersionText" Style="{StaticResource Caption}" Foreground="{DynamicResource TextTertiary}" Margin="12,0,0,6"/>
+        <WrapPanel Margin="8,0,0,0">
           <Button x:Name="ThemeBtn" Style="{StaticResource SubtleButton}" Click="ThemeBtn_Click" ToolTip="Appearance: follow Windows, light or dark" AutomationProperties.Name="Appearance" Padding="8,4"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE790;" Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"/><TextBlock x:Name="ThemeText" Text="Appearance" FontSize="12"/></StackPanel></Button>
           <Button x:Name="LogsBtn" Style="{StaticResource SubtleButton}" Click="LogsBtn_Click" ToolTip="Open the folder with this app's logs" AutomationProperties.Name="Logs" Padding="8,4"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7C3;" Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"/><TextBlock Text="Logs" FontSize="12"/></StackPanel></Button>
-          <Button x:Name="AboutBtn" Style="{StaticResource SubtleButton}" Click="AboutBtn_Click" ToolTip="About PC Migration" AutomationProperties.Name="About" Padding="8,4"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE946;" Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"/><TextBlock x:Name="VersionText" Text="About" FontSize="12"/></StackPanel></Button>
-        </StackPanel>
+          <Button x:Name="AboutBtn" Style="{StaticResource SubtleButton}" Click="AboutBtn_Click" ToolTip="About PC Migration" AutomationProperties.Name="About" Padding="8,4"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE946;" Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"/><TextBlock Text="About" FontSize="12"/></StackPanel></Button>
+        </WrapPanel>
       </StackPanel>
       <ItemsControl x:Name="StepsList" Margin="4,0">
         <ItemsControl.ItemTemplate>
@@ -95,6 +96,7 @@
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <TextBlock x:Name="FooterNote" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,24,0"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
+              <TextBlock x:Name="FooterSummary" Style="{StaticResource BodyStrong}" Foreground="{DynamicResource AccentText}" VerticalAlignment="Center" Margin="0,0,20,0" Visibility="Collapsed"/>
               <Button x:Name="BackBtn" Content="Back" MinWidth="96" Margin="0,0,8,0" Click="BackBtn_Click"/>
               <Button x:Name="NextBtn" Content="Next" Style="{StaticResource AccentButton}" MinWidth="120" Click="NextBtn_Click"/>
             </StackPanel>

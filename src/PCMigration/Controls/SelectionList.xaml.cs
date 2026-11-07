@@ -43,6 +43,8 @@ namespace PCMigration.Controls
         public string Summary { get { return Group.Summary; } }
         public bool? IsChecked { get { return Group.IsChecked; } set { Group.IsChecked = value; } }
         public bool IsVisible { get { return Group.IsVisible; } }
+        public bool HasItems { get { return Group.Items.Count > 0; } }
+        public bool HasNoItems { get { return Group.Items.Count == 0; } }
         public System.Collections.ObjectModel.ObservableCollection<SelectionItem> Items { get { return Group.Items; } }
     }
 }

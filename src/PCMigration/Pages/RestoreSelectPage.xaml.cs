@@ -70,6 +70,7 @@ namespace PCMigration.Pages
         {
             var items = Session.ImportGroups.SelectMany(g => g.Items).ToList(); var on = items.Where(i => i.IsChecked).ToList();
             Totals.Text = on.Count + " of " + items.Count + " selected  ·  " + Fmt.Mb(on.Sum(i => i.SizeMb ?? 0));
+            Window.SetFooterSummary(Fmt.Plural(on.Count, "item") + "  ·  " + Fmt.Mb(on.Sum(i => i.SizeMb ?? 0)));
         }
         private void RefreshOpen()
         {

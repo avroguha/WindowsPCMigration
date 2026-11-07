@@ -17,11 +17,11 @@
         <Border Height="1" Background="{DynamicResource Divider}" Margin="0,0,0,10"/>
         <ItemsControl x:Name="GroupRows">
           <ItemsControl.ItemTemplate><DataTemplate>
-            <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+            <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
               <TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="14" HorizontalAlignment="Left" Foreground="{DynamicResource AccentText}"/>
-              <TextBlock Grid.Column="1" Text="{Binding Title}" Style="{StaticResource Body}"/>
-              <TextBlock Grid.Column="2" Text="{Binding Names}" Style="{StaticResource Caption}" MaxWidth="520" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="0,0,16,0"/>
-              <TextBlock Grid.Column="3" Text="{Binding Count}" Style="{StaticResource Caption}" TextAlignment="Right"/>
+              <TextBlock Grid.Column="1" Text="{Binding Title}" Style="{StaticResource Body}" TextWrapping="NoWrap" Margin="0,0,16,0"/>
+              <TextBlock Grid.Column="2" Text="{Binding Names}" Style="{StaticResource Caption}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="0,0,16,0" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="3" Text="{Binding Count}" Style="{StaticResource Caption}" TextAlignment="Right" TextWrapping="NoWrap"/>
             </Grid>
           </DataTemplate></ItemsControl.ItemTemplate>
         </ItemsControl>
