@@ -78,6 +78,7 @@ $started = Get-Date
 $kitVersion = Get-MigVersion
 Write-MigLog "PC Migration kit $kitVersion - Export-Profile on $env:COMPUTERNAME as $env:USERDOMAIN\$env:USERNAME (admin: $(Test-MigAdmin))" 'STEP'
 Write-MigLog "Destination: $Destination"
+Remove-Item -LiteralPath (Get-MigPauseFile $Destination) -Force -ErrorAction SilentlyContinue   # a request left over from an earlier run; one made from now on is honoured before each entry
 $net0 = Test-MigNetwork
 Write-MigLog ("Network: {0}{1}; OneDrive client {2}. Packing into a local OneDrive folder does not need the network - the upload happens afterwards." -f $(if ($net0.Available) { 'connected' } else { 'NOT connected' }), $(if ($net0.Profiles.Count) { ' - ' + ($net0.Profiles -join '; ') } else { '' }), $(if ($net0.OneDriveRunning) { 'is running' } else { 'is NOT running - start it before the new PC needs the files' }))
 if (-not (Wait-MigReachable -Path $Destination -Mode write -TimeoutMinutes 30 -What 'the backup folder')) { throw "Backup folder unreachable: $Destination" }
@@ -477,6 +478,11 @@ if (-not $SkipPackages) {
     Write-MigLog "Phase 3: packaging $($entries.Count) catalog entries (per-file cap $MaxFileMB MB)" 'STEP'
     $n = 0
     foreach ($e in $entries) {
+        if (Test-MigPauseRequested $Destination) {
+            $left = @($entries | Select-Object -Skip $n | ForEach-Object { $_.id })
+            Write-MigLog ("PAUSED after {0} of {1} entries at your request; still to pack: {2}" -f $n, $entries.Count, ($left -join ',')) 'STEP'
+            break
+        }
         $n++
         $isSecret = [bool](Get-Prop $e 'secret' $false)
         if ($isSecret -and -not $IncludeSecrets) { $manifest.skipped += [ordered]@{ id = $e.id; reason = 'secret (use -IncludeSecrets)' }; continue }

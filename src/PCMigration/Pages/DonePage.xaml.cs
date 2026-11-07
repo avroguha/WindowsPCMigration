@@ -32,6 +32,7 @@ namespace PCMigration.Pages
             double bytes = entries.Concat(secrets).Sum(e => Json.Num(e, "bytes"));
             T1.Text = (entries.Count + secrets.Count).ToString(); T1l.Text = "items packed";
             T2.Text = Fmt.Mb(bytes / 1048576.0); T2l.Text = "in the backup";
+            VersionLine.Visibility = Visibility.Visible; VersionLine.Text = "Made with PC Migration " + Json.Str(m, "kitVersion", Kit.Version) + " (recorded in the backup). Use the same version on the new computer - a different one warns before restoring.";
             var fails = entries.Where(e => Json.Arr(e, "failures").Count > 0).Select(e => Json.Str(e, "app")).ToList();
             var large = entries.SelectMany(e => Json.Arr(e, "largeFilesSkipped")).Select(x => Convert.ToString(x)).ToList();
             T3.Text = (fails.Count + large.Count).ToString(); T3l.Text = "need a look";

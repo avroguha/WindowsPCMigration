@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -103,6 +104,9 @@ namespace PCMigration
         public bool HasExited { get; private set; }
         public int ExitCode { get; private set; }
         public bool StdErr { get; private set; }
+        /// <summary>The engine stopped at the user's request after the item in hand; Remaining lists what it did not get to.</summary>
+        public bool PausedStop { get; private set; }
+        public List<string> Remaining { get; private set; } = new List<string>();
         public string StdErrText { get { return _err.ToString(); } }
         private readonly StringBuilder _err = new StringBuilder();
         public event Action Updated;
@@ -122,7 +126,12 @@ namespace PCMigration
                 if (level == "WARN" && !msg.StartsWith("Wait for OneDrive")) Warnings++;
                 if (level == "ERROR") Errors++;
                 if (level == "OK" || level == "WARN" || level == "ERROR" || level == "WAIT") { var sp = msg.IndexOf(' '); var id = sp > 0 ? msg.Substring(0, sp) : msg; if (id.Length > 2 && id.IndexOf('-') > 0 && !id.EndsWith(":")) { DoneIds.Add(id.TrimEnd(':')); LastItem = id.TrimEnd(':'); } }
-                if (msg.StartsWith("PAUSE")) Paused = true; else if (msg.StartsWith("RESUME")) Paused = false;
+                if (msg.StartsWith("PAUSED after"))
+                {
+                    PausedStop = true; var k = msg.IndexOf("still to "); var colon = k >= 0 ? msg.IndexOf(':', k) : -1;
+                    if (colon > 0) Remaining = msg.Substring(colon + 1).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                }
+                else if (msg.StartsWith("PAUSE")) Paused = true; else if (msg.StartsWith("RESUME")) Paused = false;
             }
             else Text.AppendLine(raw);
             Raise();
@@ -130,6 +139,12 @@ namespace PCMigration
         public void Finish(int exitCode) { HasExited = true; ExitCode = exitCode; Raise(); var h = Exited; if (h != null) h(); }
         private void Raise() { var h = Updated; if (h != null) h(); }
         public bool Failed { get { return HasExited && (ExitCode != 0 || StdErr); } }
-        public void Kill() { try { if (Process != null && !Process.HasExited) Process.Kill(); } catch { } }
+        /// <summary>Stops the engine and everything it started (robocopy, tar) at once.</summary>
+        public void Kill()
+        {
+            try { if (Process == null || Process.HasExited) return; } catch { return; }
+            try { using (var k = Process.Start(new ProcessStartInfo("taskkill.exe", "/PID " + Process.Id + " /T /F") { CreateNoWindow = true, UseShellExecute = false })) k.WaitForExit(5000); } catch { }
+            try { if (!Process.HasExited) Process.Kill(); } catch { }
+        }
     }
 }

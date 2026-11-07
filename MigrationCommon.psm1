@@ -328,6 +328,17 @@ function Expand-MigArchive {
     }
 }
 
+# Cooperative pause: the app drops a request file next to the backup; the scripts look for it before every item,
+# finish the item in hand, log a PAUSED line naming what is left, and end normally (manifest, state and report are
+# written as usual). The app turns that line into resume-<computer>.json so the rest can run later - after a reboot too.
+function Get-MigPauseFile { param([Parameter(Mandatory)][string]$BackupFolder) return (Join-Path $BackupFolder ".pause-request-$env:COMPUTERNAME") }
+function Test-MigPauseRequested {
+    param([Parameter(Mandatory)][string]$BackupFolder)
+    $f = Get-MigPauseFile $BackupFolder
+    if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue; return $true }
+    return $false
+}
+
 # Removes a staging folder that may hold paths longer than 260 characters (Remove-Item cannot): robocopy mirrors an
 # empty folder over it, which it can do at any depth, then the empty shell goes.
 function Remove-MigDirectory {

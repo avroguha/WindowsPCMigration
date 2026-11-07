@@ -7,8 +7,9 @@ namespace PCMigration.Pages
     public partial class StartPage : AppPage
     {
         private BackupInfo _resume;
+        private ResumeInfo _paused; private BackupInfo _pausedBackup;
         public override string StepKey { get { return "start"; } }
-        public StartPage() { InitializeComponent(); RootBar.ActionClick += (s, e) => Window.ChangeRoot(); ResumeBar.ActionClick += (s, e) => Resume(); }
+        public StartPage() { InitializeComponent(); RootBar.ActionClick += (s, e) => Window.ChangeRoot(); ResumeBar.ActionClick += (s, e) => Resume(); PausedBar.ActionClick += (s, e) => ResumePaused(); }
 
         public override void OnShown()
         {
@@ -31,6 +32,16 @@ namespace PCMigration.Pages
             {
                 var r = await Engine.Probe("backups");
                 var backups = Json.Arr(r, "backups").Select(BackupInfo.From).ToList();
+                // a pack or restore that was paused on this computer
+                _paused = null; _pausedBackup = null;
+                foreach (var b in backups) { var rs = Runs.ReadResume(b.Path); if (rs != null) { _paused = rs; _pausedBackup = b; break; } }
+                if (_paused != null)
+                {
+                    PausedBar.Visibility = Visibility.Visible;
+                    PausedBar.Title = (_paused.Mode == Mode.Export ? "Packing" : "Restoring") + " was paused on " + Fmt.When(_paused.At);
+                    PausedBar.Message = Fmt.Plural(_paused.Remaining.Count, "item") + " of " + _paused.Total + " still to " + (_paused.Mode == Mode.Export ? "pack into " : "restore from ") + _pausedBackup.Name + ". Press Resume to carry on exactly where it stopped" + (_paused.KitVersion != Kit.Version ? " (paused with version " + _paused.KitVersion + ", this is " + Kit.Version + ")" : "") + ".";
+                }
+                else PausedBar.Visibility = Visibility.Collapsed;
                 _resume = backups.FirstOrDefault(b => b.InProgress && !b.MadeHere) ?? backups.FirstOrDefault(b => b.InProgress);
                 if (_resume != null)
                 {
@@ -59,6 +70,33 @@ namespace PCMigration.Pages
         {
             bool ok = Session.Env != null && !string.IsNullOrEmpty(Session.Env.BackupRoot) && (OldCard.IsChecked == true || NewCard.IsChecked == true);
             Window.SetFooter("Next", ok, false, "", () => Window.GoToStep(Session.Mode == Mode.Export ? "scan" : "backup"), null);
+        }
+        private async void ResumePaused()
+        {
+            var r = _paused; if (r == null) return;
+            Session.DefineSteps(r.Mode); Session.ResumeSecretIds = r.SecretIds; Session.SecretPassword = null;
+            var remaining = r.Remaining.ToList();
+            if (r.SecretIds.Count > 0)
+            {
+                var pw = await Window.AskPassword("Keys and passwords", Fmt.Plural(r.SecretIds.Count, "encrypted item") + " among the rest. Enter the bundle password, or leave it empty to skip them this time.");
+                if (string.IsNullOrEmpty(pw)) remaining = remaining.Where(id => !r.SecretIds.Contains(id)).ToList(); else Session.SecretPassword = pw;
+            }
+            if (remaining.Count == 0) { Runs.ClearResume(r.Folder); Refresh(); return; }
+            if (r.Mode == Mode.Export) Runs.StartExport(Session, r.Folder, remaining, Session.SecretPassword, Dispatcher);
+            else { Session.Backup = _pausedBackup; Runs.StartImport(Session, r.Folder, remaining, Session.SecretPassword, r.RestoreEvenIfMissing, r.ForceIds, Dispatcher); }
+            Session.SelectedIds = remaining;
+            Window.GoToStep("run");
+        }
+        private async void Discard_Click(object sender, RoutedEventArgs e)
+        {
+            var r = _paused; if (r == null) return;
+            if (r.Mode == Mode.Export)
+            {
+                if (!await Window.Dialog("Discard the paused packing?", "The backup folder made by that run is deleted:\n" + r.Folder, "Delete it", "Keep it")) return;
+                await System.Threading.Tasks.Task.Run(() => Runs.DeleteTree(r.Folder));
+            }
+            else { if (!await Window.Dialog("Discard the paused restore?", "The restore is not continued; what was restored so far stays. The backup itself is kept.", "Discard", "Keep it")) return; Runs.ClearResume(r.Folder); }
+            Refresh();
         }
         private void Resume()
         {

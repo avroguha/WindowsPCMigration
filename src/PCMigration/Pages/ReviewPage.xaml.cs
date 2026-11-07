@@ -94,9 +94,7 @@ namespace PCMigration.Pages
             var extras = Session.ExportGroups.SelectMany(g => g.Items).Where(i => i.Extra != null && (ids.Contains(i.Id) || i.Category == "custom")).Select(i => i.Extra).ToList();
             Directory.CreateDirectory(Session.Destination);
             if (extras.Count > 0) File.WriteAllText(Path.Combine(Session.Destination, "extra-entries.json"), Json.Serialize(new Dictionary<string, object> { { "entries", extras } }), System.Text.Encoding.UTF8);
-            var args = "-Destination " + Engine.Quote(Session.Destination) + " -Include " + Engine.Quote(string.Join(",", ids)) + (Session.SecretPassword != null ? " -IncludeSecrets" : "");
-            Session.Worker = Engine.Start("Export-Profile.ps1", args, Session.SecretPassword, Dispatcher);
-            Session.RunStarted = DateTime.Now;
+            Runs.StartExport(Session, Session.Destination, ids, Session.SecretPassword, Dispatcher);
             Window.GoToStep("run");
         }
         private async void StartImport()
@@ -115,9 +113,7 @@ namespace PCMigration.Pages
             Session.SelectedIds = ids;
             var secrets = Session.ImportGroups.SelectMany(g => g.Items).Where(i => i.IsSecret && ids.Contains(i.Id)).ToList();
             var force = Session.ImportGroups.SelectMany(g => g.Items).Where(i => i.Force && ids.Contains(i.Id)).Select(i => i.Id).ToList();
-            var args = "-Source " + Engine.Quote(Session.Backup.Path) + " -Include " + Engine.Quote(string.Join(",", ids)) + " -Force" + (secrets.Count > 0 ? " -IncludeSecrets" : "") + (Session.RestoreEvenIfMissing ? " -RestoreEvenIfMissing" : "") + (force.Count > 0 ? " -ForceIds " + Engine.Quote(string.Join(",", force)) : "");
-            Session.Worker = Engine.Start("Import-Profile.ps1", args, secrets.Count > 0 ? Session.SecretPassword : null, Dispatcher);
-            Session.RunStarted = DateTime.Now;
+            Runs.StartImport(Session, Session.Backup.Path, ids, secrets.Count > 0 ? Session.SecretPassword : null, Session.RestoreEvenIfMissing, force, Dispatcher);
             Window.GoToStep("run");
         }
     }

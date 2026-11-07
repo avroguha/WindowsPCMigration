@@ -57,6 +57,20 @@ namespace PCMigration
         public List<string> SelectedIds { get; set; } = new List<string>();
         public Worker Worker { get; set; }
         public DateTime RunStarted { get; set; }
+        public string RunFolder { get; set; }                 // the backup folder of the running (or paused) job
+        public List<string> ForceIds { get; set; } = new List<string>();
+        /// <summary>Ids of the secret (encrypted) items known to this session, so a resume knows when to ask for the password.</summary>
+        public List<string> SecretIdsAll
+        {
+            get
+            {
+                var groups = Mode == Mode.Export ? ExportGroups : ImportGroups;
+                var ids = groups != null ? groups.SelectMany(g => g.Items).Where(i => i.IsSecret).Select(i => i.Id).ToList() : new List<string>();
+                foreach (var x in ResumeSecretIds) if (!ids.Contains(x)) ids.Add(x);
+                return ids;
+            }
+        }
+        public List<string> ResumeSecretIds { get; set; } = new List<string>();
 
         public void DefineSteps(Mode mode)
         {

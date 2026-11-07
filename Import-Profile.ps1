@@ -79,10 +79,12 @@ $oldProfile = "$($manifest.profilePath)"; $newProfile = $env:USERPROFILE
 $profileDiffers = ($oldProfile -and ($oldProfile -ne $newProfile))
 $dry = $WhatIfPreference
 
+Remove-Item -LiteralPath (Get-MigPauseFile $Source) -Force -ErrorAction SilentlyContinue   # a request left over from an earlier run; one made from now on is honoured before each package
 $kitVersion = Get-MigVersion; $backupVersion = "$(Get-Prop $manifest 'kitVersion' 'unknown')"
 Write-MigLog "PC Migration kit $kitVersion - Import-Profile on $env:COMPUTERNAME as $env:USERDOMAIN\$env:USERNAME (admin: $(Test-MigAdmin))$(if ($dry) { '  [WHAT-IF - nothing will be changed]' })" 'STEP'
 Write-MigLog "Backup was made with kit $backupVersion."
 if ((Compare-MigVersion $backupVersion $kitVersion) -gt 0) { Write-MigLog "The backup comes from a NEWER kit ($backupVersion) than this one ($kitVersion). Update this copy of the kit before restoring - newer entries may be skipped or restored wrongly." 'WARN' }
+elseif ("$backupVersion" -ne "$kitVersion") { Write-MigLog "The backup was made with PC Migration $backupVersion; this is $kitVersion. Restoring across versions works, but entries that changed between them may land differently - check the report." 'WARN' }
 Write-MigLog "Source: $Source  (exported from $($manifest.computer) as $($manifest.user) on $($manifest.createdAt))"
 $net0 = Test-MigNetwork
 Write-MigLog ("Network: {0}; OneDrive client {1}." -f $(if ($net0.Available) { 'connected' } else { 'NOT connected - cloud-only files cannot be read until it is back' }), $(if ($net0.OneDriveRunning) { 'is running' } else { 'is NOT running' }))
@@ -254,9 +256,16 @@ if (-not $SkipPackages) {
         }
     }
     $pkgs = @($pkgs | Where-Object { -not $deferred.ContainsKey("$($_.id)") }); $secretPkgs = @($secretPkgs | Where-Object { -not $deferred.ContainsKey("$($_.id)") })
-    foreach ($p in ($pkgs | Where-Object { "$($_.kind)" -eq 'files' })) { try { Restore-Package $p $false } catch { Add-Result $p.id 'failed' $_.Exception.Message; Write-MigLog "$($p.id) FAILED: $($_.Exception.Message)" 'ERROR' } }
-    foreach ($p in ($pkgs | Where-Object { "$($_.kind)" -ne 'files' })) { try { Restore-Package $p $false } catch { Add-Result $p.id 'failed' $_.Exception.Message; Write-MigLog "$($p.id) FAILED: $($_.Exception.Message)" 'ERROR' } }
-    foreach ($p in $secretPkgs) { try { Restore-Package $p $true } catch { Add-Result $p.id 'failed' $_.Exception.Message; Write-MigLog "$($p.id) FAILED: $($_.Exception.Message)" 'ERROR' } }
+    $queue = @($pkgs | Where-Object { "$($_.kind)" -eq 'files' } | ForEach-Object { @{ P = $_; S = $false } }) + @($pkgs | Where-Object { "$($_.kind)" -ne 'files' } | ForEach-Object { @{ P = $_; S = $false } }) + @($secretPkgs | ForEach-Object { @{ P = $_; S = $true } })
+    for ($qi = 0; $qi -lt $queue.Count; $qi++) {
+        if (Test-MigPauseRequested $Source) {
+            $left = @($queue | Select-Object -Skip $qi | ForEach-Object { $_.P.id })
+            Write-MigLog ("PAUSED after {0} of {1} packages at your request; still to restore: {2}" -f $qi, $queue.Count, ($left -join ',')) 'STEP'
+            break
+        }
+        $p = $queue[$qi].P
+        try { Restore-Package $p $queue[$qi].S } catch { Add-Result $p.id 'failed' $_.Exception.Message; Write-MigLog "$($p.id) FAILED: $($_.Exception.Message)" 'ERROR' }
+    }
     if (-not $dry) { foreach ($r in $results) { if ($r.Status -in 'ok', 'partial') { $state.entries[$r.Id] = @{ status = 'restored'; at = (Get-Date).ToString('o'); app = '' } } } }
 }
 

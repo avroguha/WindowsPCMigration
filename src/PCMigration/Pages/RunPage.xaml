@@ -8,7 +8,15 @@
           <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"><TextBlock x:Name="Percent" Style="{StaticResource Title}" FontSize="32" TextAlignment="Right"/><TextBlock x:Name="Elapsed" Style="{StaticResource Caption}" TextAlignment="Right"/></StackPanel>
         </Grid>
         <ProgressBar x:Name="Bar" Maximum="100" Height="6" Margin="0,18,0,8"/>
-        <TextBlock x:Name="Current" Style="{StaticResource Caption}" Foreground="{DynamicResource TextTertiary}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <TextBlock x:Name="Current" Style="{StaticResource Caption}" Foreground="{DynamicResource TextTertiary}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center"/>
+          <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <Button x:Name="ResumeBtn" AutomationProperties.Name="Resume now" Style="{StaticResource AccentButton}" Click="Resume_Click" Margin="0,0,8,0" Visibility="Collapsed"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource OnAccent}" Margin="0,0,8,0"/><TextBlock Text="Resume now"/></StackPanel></Button>
+            <Button x:Name="PauseBtn" AutomationProperties.Name="Pause" Click="Pause_Click" Margin="0,0,8,0" ToolTip="Finishes the item in hand, then stops. The rest can continue later - also after a restart."><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE769;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,8,0"/><TextBlock x:Name="PauseText" Text="Pause"/></StackPanel></Button>
+            <Button x:Name="CancelBtn" AutomationProperties.Name="Cancel" Click="Cancel_Click" ToolTip="Stops at once and removes what this run created."><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE711;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,8,0"/><TextBlock Text="Cancel"/></StackPanel></Button>
+          </StackPanel>
+        </Grid>
       </StackPanel>
     </Border>
     <c:InfoBar x:Name="NetBar" Severity="Informational" Visibility="Collapsed"/>

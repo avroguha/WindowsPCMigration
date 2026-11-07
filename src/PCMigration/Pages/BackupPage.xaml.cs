@@ -59,7 +59,8 @@ namespace PCMigration.Pages
             var b = new List<Badge>();
             if (i.InProgress) b.Add(new Badge { Text = "Restore in progress on this PC: " + i.Restored + " restored, " + i.Deferred + " waiting", Bg = Theme.Brush("StatusSuccessBg"), Fg = Theme.Brush("StatusSuccessFg") });
             if (i.NewerThanThisKit) b.Add(new Badge { Text = "Made with a newer version (" + i.KitVersion + ") - get the newer PC Migration before restoring", Bg = Theme.Brush("StatusCriticalBg"), Fg = Theme.Brush("StatusCriticalFg") });
-            else if (!string.IsNullOrEmpty(i.KitVersion)) b.Add(new Badge { Text = "Version " + i.KitVersion, Bg = Theme.Brush("StatusInfoBg"), Fg = Theme.Brush("StatusInfoFg") });
+            else if (!string.IsNullOrEmpty(i.KitVersion) && i.KitVersion != Kit.Version) b.Add(new Badge { Text = "Made with version " + i.KitVersion + " - this app is " + Kit.Version, Bg = Theme.Brush("StatusCautionBg"), Fg = Theme.Brush("StatusCautionFg") });
+            else b.Add(new Badge { Text = "Made with version " + (string.IsNullOrEmpty(i.KitVersion) ? "unknown" : i.KitVersion), Bg = Theme.Brush("StatusInfoBg"), Fg = Theme.Brush("StatusInfoFg") });
             if (i.Placeholders > 0) b.Add(new Badge { Text = Fmt.Plural(i.Placeholders, "file") + " not downloaded yet", Bg = Theme.Brush("StatusCautionBg"), Fg = Theme.Brush("StatusCautionFg") });
             else b.Add(new Badge { Text = "All files are on this computer", Bg = Theme.Brush("StatusSuccessBg"), Fg = Theme.Brush("StatusSuccessFg") });
             if (i.Secrets > 0) b.Add(new Badge { Text = Fmt.Plural(i.Secrets, "encrypted bundle"), Bg = Theme.Brush("StatusInfoBg"), Fg = Theme.Brush("StatusInfoFg") });
@@ -81,7 +82,8 @@ namespace PCMigration.Pages
         private async void Next()
         {
             var row = _rows.FirstOrDefault(x => x.IsSelected); if (row == null) return;
-            if (row.Info.NewerThanThisKit && !await Window.Dialog("Backup from a newer version", "This backup was made with PC Migration " + row.Info.KitVersion + "; this is " + Kit.Version + ". Newer entries may be skipped or restored wrongly. Continue anyway?", "Continue", "Go back")) return;
+            if (row.Info.NewerThanThisKit && !await Window.Dialog("Backup from a newer version", "This backup was made with PC Migration " + row.Info.KitVersion + "; this is " + Kit.Version + ". Newer entries may be skipped or restored wrongly. Get the newer PC Migration before restoring. Continue anyway?", "Continue", "Go back")) return;
+            if (!row.Info.NewerThanThisKit && row.Info.KitVersion != Kit.Version && !await Window.Dialog("Backup from a different version", "This backup was made with PC Migration " + (string.IsNullOrEmpty(row.Info.KitVersion) ? "an unknown version" : row.Info.KitVersion) + "; this is " + Kit.Version + ". Restoring across versions works, but entries that changed between them may land differently - the report lists every item. Best use the same version on both computers.", "Continue", "Go back")) return;
             if (Session.Backup == null || Session.Backup.Path != row.Info.Path) { Session.InstallItems = null; Session.ImportGroups = null; }
             Session.Backup = row.Info;
             Window.GoToStep("install");

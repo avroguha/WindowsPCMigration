@@ -73,15 +73,30 @@ namespace PCMigration
                 "It runs as a standard user: no administrator rights, nothing installed, nothing touched outside your own profile.\n\n" +
                 "Engine files: " + Kit.Dir + "\nLogs: " + Kit.LogDir + "\nWindows build " + Native.OsBuild + (_mica ? ", Mica backdrop" : ""), "Close", null);
         }
+        private bool _closeAfterPause;
         private async void OnClosing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             var w = Session.Worker;
             if (w != null && !w.HasExited)
             {
                 e.Cancel = true;
-                if (await Dialog("Work is still running", "The " + (Session.Mode == Mode.Export ? "packing" : "restore") + " has not finished. Closing now stops it half way; you can run it again later and it continues where it left off.", "Keep running", "Stop and close") == false)
-                { w.Kill(); Session.Worker = null; Close(); }
+                if (_closeAfterPause) return;
+                if (await Dialog("Work is still running", "The " + (Session.Mode == Mode.Export ? "packing" : "restore") + " has not finished. Pause and close finishes the item in hand, keeps what is done, and the first page offers to continue next time - also after switching the computer off.", "Pause and close", "Keep running"))
+                {
+                    _closeAfterPause = true; Runs.RequestPause(Session);
+                    PageTitle.Text = "Pausing…"; PageSubtitle.Text = "Finishing the item in hand; the window closes by itself.";
+                    w.Exited += () => { Session.Worker = null; Close(); };
+                    if (w.HasExited) { Session.Worker = null; Close(); }
+                }
             }
+        }
+        /// <summary>A content dialog with one password field. Returns the password, or null when dismissed.</summary>
+        public async Task<string> AskPassword(string title, string message)
+        {
+            var pb = new System.Windows.Controls.PasswordBox { Width = 300, HorizontalAlignment = HorizontalAlignment.Left };
+            System.Windows.Automation.AutomationProperties.SetName(pb, "password");
+            var ok = await Dialog(title, message, "Continue", "Cancel", null, pb);
+            return ok ? pb.Password : null;
         }
 
         // ---------- environment / status pane ----------

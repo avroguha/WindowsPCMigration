@@ -6,7 +6,7 @@
         <Grid Width="240" Margin="0,0,8,4"><TextBox x:Name="Search" Padding="32,5,10,5" TextChanged="Search_TextChanged" AutomationProperties.Name="Search"/><TextBlock Text="&#xE721;" Style="{StaticResource Icon}" FontSize="14" HorizontalAlignment="Left" Margin="11,0,0,0" Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False"/><TextBlock x:Name="SearchHint" Text="Search settings" Style="{StaticResource BodySecondary}" Margin="33,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/></Grid>
         <Button Content="Select all" Click="SelectAll_Click" Margin="0,0,8,4"/>
         <Button Content="Select none" Click="SelectNone_Click" Margin="0,0,8,4"/>
-        <Button x:Name="AddFolderBtn" Click="AddFolder_Click" Margin="0,0,8,4"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F4;" Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"/><TextBlock Text="Add a folder…"/></StackPanel></Button>
+        <Button x:Name="AddFolderBtn" AutomationProperties.Name="Add a folder" Click="AddFolder_Click" Margin="0,0,8,4"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F4;" Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"/><TextBlock Text="Add a folder…"/></StackPanel></Button>
       </WrapPanel>
       <Border Grid.Column="1" Style="{StaticResource Pill}" Background="{DynamicResource AccentSoft}" Padding="12,5" Margin="8,0,0,4" VerticalAlignment="Top"><TextBlock x:Name="Totals" Style="{StaticResource PillText}" Foreground="{DynamicResource AccentText}"/></Border>
     </Grid>

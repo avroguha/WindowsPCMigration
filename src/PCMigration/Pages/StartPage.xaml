@@ -2,6 +2,9 @@
   <StackPanel>
     <c:InfoBar x:Name="RootBar" Severity="Error" Title="No place to keep the backup" Message="OneDrive was not found on this computer. Choose a folder that both computers can reach - a network share, for example." ActionText="Choose a folder" Visibility="Collapsed"/>
     <c:InfoBar x:Name="AdminBar" Severity="Informational" Title="Running as administrator" Visibility="Collapsed"/>
+    <c:InfoBar x:Name="PausedBar" Severity="Success" ActionText="Resume" Visibility="Collapsed">
+      <c:InfoBar.ExtraContent><Button Style="{StaticResource LinkButton}" Content="Discard this paused run instead" HorizontalAlignment="Left" Padding="0,2" Click="Discard_Click"/></c:InfoBar.ExtraContent>
+    </c:InfoBar>
     <c:InfoBar x:Name="ResumeBar" Severity="Success" Title="Continue where you left off" ActionText="Continue" Visibility="Collapsed"/>
     <TextBlock Text="Which computer is this?" Style="{StaticResource Subtitle}" Margin="0,4,0,12"/>
     <Grid Margin="0,0,0,8">

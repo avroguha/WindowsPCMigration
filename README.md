@@ -46,7 +46,7 @@ Double-click it. The steps are listed on the left and you can go back to any fin
    optional group with the password for the encrypted bundle.
 4. **Review.** Items, estimated size, destination folder, what is still open, OneDrive state - the last look before
    anything is written.
-5. **Pack.** Progress, phase, elapsed time, a network/pause strip, and the engine log under *Details*.
+5. **Pack.** Progress, phase, elapsed time, a network strip, the engine log under *Details*, and Pause / Cancel.
 6. **Done.** What was packed, what was in use or too large, what to do next, and the list of things only you can do.
 
 **New computer** - 1 Start, 2 Backup, 3 Install, 4 Choose, 5 Review, 6 Restore, 7 Done.
@@ -95,6 +95,19 @@ any other: the zips are made and opened with the `tar.exe` that ships in Windows
 handles long paths on every machine, while robocopy does the copying. Only on a Windows without `tar.exe` does the
 kit fall back to .NET's ZipFile, which cannot read such paths; they are then detected before copying, left out, and
 listed in `report.md`.
+
+**Pause, resume, cancel.** The Pack and Restore pages have Pause and Cancel. Pause lets the engine finish the item in
+hand, then stops; what is done is safe in the backup folder and a `resume-<computer>.json` there records the rest.
+Press Resume now, or Finish later: the first page of PC Migration offers to resume, also after the computer was
+switched off (closing the window while a run is going offers the same "Pause and close"). Cancel stops the engine at
+once; on the old computer it deletes the backup folder made by that run and the staging files, on the new computer it
+keeps the backup and what was already restored (every replaced setting was backed up first). The command line does the
+same: drop a `.pause-request-<computer>` file into the backup folder and the running script stops after the current
+item, logging a PAUSED line that names what is left.
+
+**Versions on both sides.** Every backup records the version that made it (`manifest.json`, `report.md`, the Done
+page). The Backup page shows that version on each card and flags any difference from the running app; choosing such a
+backup asks before continuing, a newer one more strongly. The restore log carries the same warning.
 
 **Space.** The Review page reads the free space at the backup location (local drive or share) and compares it with
 the selection's size before compression: green when there is room, amber when it is tight, red - and a question
