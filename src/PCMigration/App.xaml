@@ -1,0 +1,21 @@
+<Application x:Class="PCMigration.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" ShutdownMode="OnMainWindowClose">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Themes/Controls.xaml"/>
+        <!-- Light.xaml or Dark.xaml is appended here by Theme.cs (WPF searches merged dictionaries last-to-first) -->
+        <ResourceDictionary Source="Themes/Light.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+      <!-- accent brushes are filled in by Theme.cs from the Windows accent colour; these are the start-up defaults -->
+      <SolidColorBrush x:Key="Accent" Color="#005FB8"/>
+      <SolidColorBrush x:Key="AccentHover" Color="#1A6FC4"/>
+      <SolidColorBrush x:Key="AccentPressed" Color="#3183CA"/>
+      <SolidColorBrush x:Key="AccentText" Color="#005FB8"/>
+      <SolidColorBrush x:Key="OnAccent" Color="#FFFFFF"/>
+      <SolidColorBrush x:Key="AccentDisabled" Color="#37000000"/>
+      <SolidColorBrush x:Key="AccentBorder" Color="#14FFFFFF"/>
+      <SolidColorBrush x:Key="AccentSoft" Color="#1A005FB8"/>
+      <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

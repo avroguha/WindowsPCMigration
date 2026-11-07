@@ -1,0 +1,35 @@
+<local:AppPage x:Class="PCMigration.Pages.BackupPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:PCMigration" xmlns:c="clr-namespace:PCMigration.Controls">
+  <StackPanel>
+    <c:InfoBar x:Name="LoadingBar" Severity="Informational" Title="Looking for backups…" Message="Reading every backup folder in the backup location."/>
+    <c:InfoBar x:Name="EmptyBar" Severity="Warning" Title="No backup found yet" ActionText="Refresh" Visibility="Collapsed"/>
+    <c:InfoBar x:Name="ErrorBar" Severity="Error" ActionText="Try again" Visibility="Collapsed"/>
+    <ItemsControl x:Name="List">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <RadioButton Style="{StaticResource ChoiceCard}" GroupName="backup" IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,0,8" Padding="20,16" AutomationProperties.Name="{Binding Info.Name}">
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+              <Border Width="40" Height="40" CornerRadius="8" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top" Margin="0,0,16,0"><TextBlock Text="&#xE7F8;" Style="{StaticResource Icon}" FontSize="20" Foreground="{DynamicResource AccentText}"/></Border>
+              <StackPanel Grid.Column="1" Margin="0,0,28,0">
+                <TextBlock Text="{Binding Info.Title}" Style="{StaticResource BodyStrong}" FontSize="16"/>
+                <TextBlock Text="{Binding Info.Sub}" Style="{StaticResource Caption}" Margin="0,2,0,0"/>
+                <TextBlock Text="{Binding Info.Path}" Style="{StaticResource Caption}" Foreground="{DynamicResource TextTertiary}" Margin="0,2,0,0"/>
+                <ItemsControl ItemsSource="{Binding Badges}" Margin="0,8,0,0">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate><DataTemplate>
+                    <Border Style="{StaticResource Pill}" Margin="0,0,6,4"><Border.Background><Binding Path="Bg"/></Border.Background><TextBlock Text="{Binding Text}" Style="{StaticResource PillText}"><TextBlock.Foreground><Binding Path="Fg"/></TextBlock.Foreground></TextBlock></Border>
+                  </DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                  <Button Content="Download everything now" Style="{StaticResource RowButton}" Margin="0,0,6,0" Visibility="{Binding HasPlaceholders, Converter={StaticResource BoolToVis}}" Click="Download_Click" Tag="{Binding}"/>
+                  <Button Content="Open folder" Style="{StaticResource RowButton}" Margin="0" Click="OpenFolder_Click" Tag="{Binding}"/>
+                </StackPanel>
+              </StackPanel>
+            </Grid>
+          </RadioButton>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <Button x:Name="RefreshBtn" Content="Refresh" HorizontalAlignment="Left" Click="Refresh_Click" Margin="0,4,0,0"/>
+  </StackPanel>
+</local:AppPage>

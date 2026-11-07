@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- PC Migration desktop app. Targets the .NET Framework 4.8 that ships inside Windows 10/11, so the exe runs on any
+       company PC with nothing installed and no admin rights. Built with the .NET SDK (dev machine only): Build-Exe.ps1. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>PCMigration</RootNamespace>
+    <AssemblyName>PCMigration</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <KitVersion>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../../VERSION').Trim())</KitVersion>
+    <Version>$(KitVersion)</Version>
+    <AssemblyVersion>$(KitVersion).0</AssemblyVersion>
+    <FileVersion>$(KitVersion).0</FileVersion>
+    <InformationalVersion>$(KitVersion)</InformationalVersion>
+    <Product>PC Migration</Product>
+    <AssemblyTitle>PC Migration</AssemblyTitle>
+    <Description>Moves a user's settings from one Windows PC to another through OneDrive or a shared folder. No admin rights, nothing to install.</Description>
+    <Company>PC Migration</Company>
+    <Copyright></Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="UIAutomationProvider" />
+  </ItemGroup>
+  <!-- The engine travels inside the exe and is unpacked to %LOCALAPPDATA%\PCMigration\kit-<version> at start. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\MigrationCommon.psm1" LogicalName="kit/MigrationCommon.psm1" />
+    <EmbeddedResource Include="..\..\catalog.json" LogicalName="kit/catalog.json" />
+    <EmbeddedResource Include="..\..\Export-Profile.ps1" LogicalName="kit/Export-Profile.ps1" />
+    <EmbeddedResource Include="..\..\Compare-Software.ps1" LogicalName="kit/Compare-Software.ps1" />
+    <EmbeddedResource Include="..\..\Import-Profile.ps1" LogicalName="kit/Import-Profile.ps1" />
+    <EmbeddedResource Include="..\..\UI-Probe.ps1" LogicalName="kit/UI-Probe.ps1" />
+    <EmbeddedResource Include="..\..\Export.cmd" LogicalName="kit/Export.cmd" />
+    <EmbeddedResource Include="..\..\Compare-Software.cmd" LogicalName="kit/Compare-Software.cmd" />
+    <EmbeddedResource Include="..\..\Import.cmd" LogicalName="kit/Import.cmd" />
+    <EmbeddedResource Include="..\..\README.md" LogicalName="kit/README.md" />
+    <EmbeddedResource Include="..\..\VERSION" LogicalName="kit/VERSION" />
+  </ItemGroup>
+</Project>

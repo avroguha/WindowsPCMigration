@@ -12,40 +12,66 @@ puts your **settings** back.
 
 ## The simple way: `PCMigration.exe` (or `Start Migration.cmd`)
 
-Share **`dist\PCMigration-<version>.exe`** (for example `PCMigration-1.1.0.exe`): one file, about 80 KB, nothing to install. It carries the whole kit inside, unpacks it
-to `%LOCALAPPDATA%\PCMigration\kit` every time it starts (so an updated exe replaces the old files) and opens
-the wizard. Put it in OneDrive so the same copy is on both computers. If the company blocks unsigned
-programs, the zip with `Start Migration.cmd` does exactly the same; if it blocks PowerShell scripts, both are
-blocked and IT has to allow the folder. Rebuild with `Build-Exe.ps1` (uses the C# compiler that ships with
-Windows, no tools needed); `Build-Package.ps1` makes the zip.
+Share **`dist\PCMigration-<version>.exe`**: one file, about 500 KB, nothing to install, no administrator rights.
+It is a proper Windows desktop application (C# / WPF on the .NET Framework that is part of every Windows 10 and 11),
+designed after the Windows 11 Settings app: a step rail on the left, a content page on the right, light or dark
+following Windows, your accent colour, Mica backdrop on Windows 11. The migration engine (the PowerShell scripts and
+`catalog.json`) travels inside the exe and is unpacked to `%LOCALAPPDATA%\PCMigration\kit-<version>` at start, so an
+updated exe always runs its own engine. Put the exe in OneDrive so the same copy is on both computers. If the company
+blocks unsigned programs, the zip has the same files plus `Export.cmd` / `Import.cmd` for the command line; if it blocks
+PowerShell scripts, IT has to allow the kit folder. Rebuild with `Build-Exe.ps1` (needs the .NET SDK on the build
+machine only - the script installs it per user when missing); it also runs `Build-Package.ps1` for the zip.
 
-**Versions.** The version lives in the `VERSION` file, is baked into the exe name and properties, shown top-right in the wizard, printed on the first log line of every script, written into each backup's `manifest.json` and `report.md`, and checked on restore: a backup made with a newer kit than the one restoring makes the wizard say so. Bump `VERSION` before running the build scripts.
+**With or without admin.** The exe asks for nothing (`asInvoker` manifest) and works the same as a standard user or
+an administrator; everything it touches is inside the signed-in profile. When it does run elevated it says so on the
+first page and names the account whose settings it will pack or restore - the only thing elevation changes.
 
-Double-click it. A wizard opens (no install, nothing to configure):
+**Versions.** The version lives in the `VERSION` file, is baked into the exe name and properties, shown bottom-left in
+the app, printed on the first log line of every script, written into each backup's `manifest.json` and `report.md`,
+and checked on restore: a backup made with a newer kit than the one restoring is flagged on the Backup page.
+Bump `VERSION` before running the build scripts.
 
-1. **Which computer is this?** Old or new. The wizard guesses from what is already in OneDrive.
-2. **Old PC - What do you want to take?** Everything found on the computer, grouped (Windows look and feel,
-   Office and Outlook, browsers, developer tools, utilities, data tools), each with a one-line description and
-   its size. Tick or untick; keys and passwords are a separate, optional, password-protected group.
-   Press **Pack my settings** and watch the progress bar. The last page says what to do next.
-3. **New PC - What to install.** One checklist built by comparing the old computer with this one: programs,
-   Store apps, developer tools, VS Code and browser extensions, npm / pip / .NET / PowerShell packages. Each row
-   has Open (store or package page), Install now (where a command exists), Installed and Skip; whatever is
-   detected on the machine is ticked off automatically on every visit, and the status is saved in the backup
-   folder, so closing the wizard and reopening it continues exactly there (the first page offers *Continue where
-   you left off*). Skipped programs keep their settings out of the restore; programs you mark installed by hand
-   are restored even if the wizard cannot detect them.
-4. **New PC - What do you want to restore?** Same tick list, built from the backup. Open programs that would
-   block the restore are listed with a *Close them for me* button. Press **Restore my settings**.
-5. **Done.** A *Sign out now* button and the short list of things only you can do (saved passwords, default apps).
+Double-click it. The steps are listed on the left and you can go back to any finished one:
+
+**Old computer** - 1 Start, 2 Scan, 3 Choose, 4 Review, 5 Pack, 6 Done.
+
+1. **Start.** Which computer is this? The app guesses from what is already in the backup location. The pane at the
+   bottom left shows the signed-in user, the backup location (with *Change*), network and OneDrive state.
+2. **Scan.** The catalog is checked against this PC, then AppData is searched for programs the catalog does not
+   know. Result tiles: settings found, programs, other data folders, keys and passwords. Programs still open that hold
+   unsaved work are listed with *Close them for me*.
+3. **Choose.** Everything found, grouped (Windows look and feel, Office and Outlook, browsers, developer tools,
+   utilities, data tools, other programs found, folders you added), each with a one-line description and its size
+   (measured in the background). Search box, Select all / none, *Add a folder…*. Keys and passwords are a separate,
+   optional group with the password for the encrypted bundle.
+4. **Review.** Items, estimated size, destination folder, what is still open, OneDrive state - the last look before
+   anything is written.
+5. **Pack.** Progress, phase, elapsed time, a network/pause strip, and the engine log under *Details*.
+6. **Done.** What was packed, what was in use or too large, what to do next, and the list of things only you can do.
+
+**New computer** - 1 Start, 2 Backup, 3 Install, 4 Choose, 5 Review, 6 Restore, 7 Done.
+
+2. **Backup.** Every backup in the backup location as a card: computer, user, date, items, size, version, whether its
+   files are downloaded (*Download everything now*), whether a restore is already in progress on this PC.
+3. **Install.** One checklist built by comparing the old computer with this one: programs, Store apps, developer
+   tools, VS Code and browser extensions, npm / pip / .NET / PowerShell packages. Each row has Open (store or package
+   page), Install now (where a command exists), Copy name, Installed and Skip; whatever is detected on the machine is
+   ticked off automatically on every visit, and the status is saved in the backup folder, so closing the app and
+   reopening it continues exactly there (the first page offers *Continue where you left off*). Skipped programs keep
+   their settings out of the restore; programs you mark installed by hand are restored even if they cannot be detected.
+4. **Choose.** The same tick list, built from the backup: ready now, waiting for a program, restored earlier.
+   Open programs that would block the restore are listed with *Close them for me*.
+5. **Review.** Items, size, source, the *also restore settings whose program is not installed yet* option.
+6. **Restore.** Progress as above; anything replaced is backed up first under `AppData\Local\PCMigration-backup`.
+7. **Done.** Restored / problems / waiting, *Sign out now*, the report, and the things only you can do.
 
 Run it again any time: a second pack merges into the same backup, a second restore only touches what you tick.
 
 **Programs that are not installed yet.** Each catalog entry knows how to tell whether its program exists on
 the new PC (`appCheck`: an entry in Apps & Features, an exe on PATH, a Store package, a registry key or a
 path). A restore skips entries whose program is missing, records them in `restore-state-<computer>.json` next
-to the backup, and the wizard shows them as *Waiting for Notepad++ to be installed*. Install the program,
-run the wizard again: those entries are pre-ticked as *installed now - ready*, entries restored earlier are
+to the backup, and the app shows them as *Waiting for Notepad++ to be installed*. Install the program,
+run the app again: those entries are pre-ticked as *installed now - ready*, entries restored earlier are
 unticked with the date. The command line does the same (`Import.cmd` repeatedly; `-RestoreEvenIfMissing`
 overrides the check).
 
@@ -54,14 +80,14 @@ Notepad's open and unsaved tabs (`win-notepad-tabs`), Notepad++'s unsaved tabs a
 VS Code's hot-exit backups (`dev-vscode`), Office AutoRecover copies and the Unsaved Files folder
 (`office-unsaved`), Sticky Notes, browser open tabs, and pinned clipboard items. Outlook drafts live in the
 mailbox. Notepad and Notepad++ write their recovery files while running; VS Code and Office mostly on close
-or every few minutes, so the wizard lists the editors that are still open and offers to close them (each one
+or every few minutes, so the app lists the editors that are still open and offers to close them (each one
 asks you to save). On the new PC those programs must be closed during the restore, or they overwrite the
 restored tabs with their own empty state.
 
 **Network.** Packing into a local OneDrive folder needs no network; the upload happens afterwards. The first
 page shows the network and OneDrive status. Where the network does matter - a share as the backup location,
 or the new PC reading files that are still cloud-only - every package is preceded by a reachability check:
-if the location is gone, the script logs PAUSE, the wizard shows "Paused - waiting", and it resumes by itself
+if the location is gone, the script logs PAUSE, the app shows "Paused - waiting", and it resumes by itself
 when the location is back (up to 60 minutes, then it stops cleanly; re-running continues where it left off).
 
 **Paths longer than 260 characters** (typically caches of editor extensions) cannot be zipped by Windows'
@@ -159,12 +185,12 @@ network printers and the default printer.
 | Wi-Fi keys, VPN, machine-wide software, drivers, ODBC drivers | admin / IT-managed | portal / service desk |
 | WSL distributions, VMs, Docker images, SDKs, model weights | GB-sized content | `wsl --export`, copy by hand; listed in discovery |
 
-### Where the wizard looks for browser data (bookmarks are wherever the profile is)
+### Where the app looks for browser data (bookmarks are wherever the profile is)
 
 A browser's bookmarks, history and extensions live inside its profile folder, and that folder is not always in the
 default place: a company policy (`UserDataDir`), a shortcut started with `--user-data-dir=...`, or a Firefox profile
 created somewhere else (`profiles.ini` with `IsRelative=0`, `firefox -profile <dir>`) all move it. For every browser
-entry the wizard therefore resolves the real folders in this order and packs **all** of them: the policy value (HKCU
+entry the app therefore resolves the real folders in this order and packs **all** of them: the policy value (HKCU
 then HKLM, `${local_app_data}`-style variables expanded), the command line of a running copy of the browser, shortcuts
 on the Desktop, Start menu and taskbar, and finally the default folder. The selection page shows "Also found outside the
 default location" when that happens, and `export.log` names the folder. On restore a folder goes back to the same path
@@ -175,7 +201,7 @@ browser uses there instead.
 
 ```
 PCMigration\<pc>-<user>-<date>\
-  manifest.json        what was packaged, read by Import-Profile and the wizard
+  manifest.json        what was packaged, read by Import-Profile and the app
   catalog.json         copy of the catalog used
   report.md            summary + manual to-do list        <- read this
   install-list.md/.csv written by Compare-Software on the new PC
@@ -192,7 +218,7 @@ PCMigration\<pc>-<user>-<date>\
 
 ## Extending the catalog
 
-Every entry has a `summary` (the one-liner the wizard shows) and `notes` (the technical detail in report.md).
+Every entry has a `summary` (the one-liner the app shows) and `notes` (the technical detail in report.md).
 
 
 `catalog.json` is the whole definition of "what a setting is". An entry is a set of files or HKCU keys:
@@ -215,6 +241,39 @@ PuTTY/KiTTY sessions reference), `hkcu-vendors` (registry entries only). `"secre
 a folder to named files. Entries whose paths do not exist on the source are skipped silently, so the catalog can
 be generous. Use `discovery\*.csv` from a real export to decide what to add.
 
+## The app's source (`src\PCMigration`)
+
+| File | What it is |
+|---|---|
+| `PCMigration.csproj` | SDK-style project, `net48`, `UseWPF`; reads `VERSION`; embeds the engine files as resources |
+| `app.manifest` | `asInvoker` (never asks for admin), per-monitor DPI v2, long paths |
+| `App.xaml(.cs)` | start-up: `--kit <dir>`, `--root <backup root>`, `--theme light|dark|system`; unpacks the kit; global error dialog |
+| `Themes\Controls.xaml` | the control styles in the Windows 11 (WinUI 3) idiom: buttons, check boxes, inputs, combo, scroll bars, progress, expander, cards, nav items |
+| `Themes\Light.xaml`, `Dark.xaml` | the colour tokens (same keys); `Theme.cs` swaps them and derives the accent set from Windows' `AccentPalette` |
+| `Native.cs` | the few Win32 calls: Mica backdrop and dark title bar (DWM), Snap Layouts hit-testing for the custom maximize button, the modern folder picker |
+| `MainWindow.xaml(.cs)` | custom title bar, the step rail, page host, command bar, the content dialog layer |
+| `Pages\*` | one page per step: Start, Scan, Select, Review, Run, Done; Backup, Install, RestoreSelect |
+| `Controls\InfoBar`, `SelectionList` | the WinUI-style info strip and the grouped tick list both selection pages use |
+| `Engine.cs`, `Kit.cs`, `Json.cs`, `Models.cs`, `Session.cs`, `Apps.cs` | runs the scripts, unpacks the kit, parses JSON with the in-box serializer, holds the models and the per-run state, knows which running programs matter |
+
+Design references: the Windows 11 design principles and Fluent 2 tokens (type ramp, 4 px corners, 32 px controls,
+layer and card fills, accent usage in light and dark), the Settings app's navigation layout, and the step-based flow
+that PC migration products share (choose the computer, analyse, select with totals, review, transfer with a log,
+report). Every control the UI tests touch has an `AutomationProperties.Name` (buttons by their text, tick boxes by
+catalog id), so `lab\ui-test.ps1` drives the real app through UI Automation.
+
+## Screenshots (`sample-output\app-*.png`)
+
+Captured by `lab\ui-test.ps1` from the real app on 2026-11-07: the old-computer flow in the light theme
+(`app-1-start` to `app-6-done`) and the new-computer flow in the dark theme (`app-7-backup` to `app-11-done`).
+`powershell -File lab\ui-test.ps1 -Mode export -ShotDir <dir> -MigRoot <backup root> -Exe dist\PCMigration-<ver>.exe
+[-Theme light|dark] [-Ids a,b,c]` runs the whole flow against a scratch backup root and leaves a PNG per page.
+On the lab VMs: `bash lab/push-kit.sh` puts the kit and exe on the share, then on `pve`
+`bash run-on-vm.sh 9311 elevated 'lab\vm-ui-test.ps1' -Mode export` (and `9312 ... -Mode import`). It must be the
+`elevated` (interactive, `/it`) mode: the `user` mode runs the task in session 0, where the app starts but UI
+Automation cannot see its window ("window not found"). The run on 2026-11-07 passed on both VMs with the 2.0.0 exe
+(no .NET SDK there, .NET Framework 4.8 only).
+
 ## The lab test (`lab\`)
 
 Result of the run on 2026-10-21 (`sample-output\lab-run\`): the first restore on the bare new VM restored 13
@@ -235,8 +294,10 @@ programs, after installing the rest - and compares the fingerprint. `bash build-
 
 ## Requirements and limits
 
-- Windows PowerShell 5.1 (built in), standard user. Nothing is installed. The wizard is WPF, also built into Windows;
-  `Migration-UI.ps1` only drives the three scripts in a hidden child process and reads their log.
+- Windows 10 or 11 with the .NET Framework 4.8 (part of Windows) and Windows PowerShell 5.1 (built in); standard
+  user. Nothing is installed. The app (`src\PCMigration`, C# / WPF) never reads AppData or the registry itself: it
+  runs the engine scripts in hidden child processes - `UI-Probe.ps1` answers its questions as JSON, the three
+  worker scripts stream their log back - so the command line and the app always agree on what a setting is.
 - If the company blocks scripts (AppLocker/WDAC "this script is blocked"), the fallback is
   `powershell -NoProfile -Command "Get-Content .\Export-Profile.ps1 -Raw | Invoke-Expression"`
   from inside the kit folder; in Constrained Language Mode the zip step falls back to `Compress-Archive` (2 GB

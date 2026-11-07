@@ -48,7 +48,7 @@ param(
 $ErrorActionPreference = 'Continue'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Import-Module (Join-Path $scriptDir 'MigrationCommon.psm1') -Force
-# The wizard (Migration-UI.ps1) hands the secrets password over in an environment variable of the child process.
+# The app (PCMigration.exe) hands the secrets password over in an environment variable of the child process.
 if (-not $SecretsPassword -and $env:PCMIG_SECRET_PW) { $SecretsPassword = ConvertTo-SecureString $env:PCMIG_SECRET_PW -AsPlainText -Force; $env:PCMIG_SECRET_PW = $null }
 
 # ---------- locate the export ----------
@@ -59,7 +59,7 @@ if (-not $Source) {
     if (-not $cand) { throw "No export with a manifest.json under $root (has OneDrive finished syncing?)" }
     $Source = $cand[0].FullName
 }
-$Source = (Resolve-Path -LiteralPath $Source).Path
+$Source = (Resolve-Path -LiteralPath $Source).ProviderPath   # .Path is provider-qualified for a UNC share (FileSystem::\...), which .NET file calls cannot open
 $manifestPath = Join-Path $Source 'manifest.json'
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw "manifest.json not found in $Source" }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
